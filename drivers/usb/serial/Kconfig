@@ -669,6 +669,20 @@ config USB_SERIAL_SSU100
 	  To compile this driver as a module, choose M here: the
 	  module will be called ssu100.
 
+##;elite1k-520016c.d1-GLU-08 -Start
+config USB_SERIAL_VIZZINI
+        tristate "Vizzini USB Serial Driver"
+        help
+          Say Y here if you want to use Vizzini USB Serial Driver.
+          
+          this driver supports EXAR XR21V141x USB to UART module.
+          http://www.exar.com
+
+          To compile this driver as a module, choose M here: the 
+          module will be called vizzini.
+
+##;elite1k-520016c.d1-GLU-08 -End
+
 config USB_SERIAL_DEBUG
 	tristate "USB Debugging Device"
 	help

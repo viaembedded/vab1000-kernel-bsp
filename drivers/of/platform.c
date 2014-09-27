@@ -192,6 +192,9 @@ struct platform_device *of_platform_device_create_pdata(
 					void *platform_data,
 					struct device *parent)
 {
+#if defined(CONFIG_ARCH_ELITE_1000)
+	u64 dma_mask = 0xffffffffUL;
+#endif
 	struct platform_device *dev;
 
 	if (!of_device_is_available(np))
@@ -207,6 +210,9 @@ struct platform_device *of_platform_device_create_pdata(
 	dev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
 	dev->dev.bus = &platform_bus_type;
 	dev->dev.platform_data = platform_data;
+#if defined(CONFIG_ARCH_ELITE_1000)
+	dev->dev.dma_mask = &dma_mask;
+#endif
 
 	/* We do not fill the DMA ops for platform devices by default.
 	 * This is currently the responsibility of the platform code

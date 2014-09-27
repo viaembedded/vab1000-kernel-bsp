@@ -63,6 +63,20 @@ config USB_EHCI_HCD
 	  To compile this driver as a module, choose M here: the
 	  module will be called ehci-hcd.
 
+config EHCI_ELITE
+        bool "Elite EHCI controller"
+        depends on USB_EHCI_HCD && ARCH_ELITE
+        default y
+        ---help---
+        Support elite ehci usb controller
+
+config ELITE_CROSS4k_PATCH
+        bool "Elite CROSS 4k usb host patch"
+        depends on EHCI_ELITE
+        default n
+        ---help---
+        Elite CROSS 4k usb host patch
+
 config USB_EHCI_ROOT_HUB_TT
 	bool "Root Hub Transaction Translators"
 	depends on USB_EHCI_HCD
@@ -443,7 +457,7 @@ config USB_OHCI_LITTLE_ENDIAN
 
 config USB_UHCI_HCD
 	tristate "UHCI HCD (most Intel and VIA) support"
-	depends on USB && (PCI || SPARC_LEON)
+	depends on USB && (PCI || SPARC_LEON || ARCH_ELITE)
 	---help---
 	  The Universal Host Controller Interface is a standard by Intel for
 	  accessing the USB hardware in the PC (which is also called the USB
@@ -458,10 +472,17 @@ config USB_UHCI_HCD
 	  To compile this driver as a module, choose M here: the
 	  module will be called uhci-hcd.
 
+config UHCI_ELITE
+        bool "Elite UHCI controller"
+        depends on USB_UHCI_HCD && ARCH_ELITE
+        default y
+        ---help---
+        Support elite uhci usb controller
+
 config USB_UHCI_SUPPORT_NON_PCI_HC
 	bool
 	depends on USB_UHCI_HCD
-	default y if SPARC_LEON
+	default y if SPARC_LEONI || UHCI_ELITE
 
 config USB_UHCI_BIG_ENDIAN_MMIO
 	bool

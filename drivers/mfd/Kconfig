@@ -879,6 +879,15 @@ config MFD_RC5T583
 	  like GPIO, interrupts, RTC, LDO and DCDC regulators, onkey.
 	  Additional drivers must be enabled in order to use the
 	  different functionality of the device.
+config WCD5102_CODEC
+        tristate "WCD5102 Codec"
+        select SLIMBUS
+        select MFD_CORE
+        default n
+        help
+          Enables the WCD5102 core driver. The core driver provides
+          read/write capability to registers which are part of the
+          WCD5102 core and gives the ability to use the WCD5102 codec.
 
 config MFD_ANATOP
 	bool "Support for Freescale i.MX on-chip ANATOP controller"

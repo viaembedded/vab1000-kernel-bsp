@@ -1,0 +1,31 @@
+config SND_I2S_ELITE_SOC
+	tristate "SoC I2S Audio Support for S3 Elite Chips"
+	depends on ARCH_ELITE
+	help
+          Say Y or M if you want to add support for codecs attached to
+          the ELITE I2S interface. You will also need to select the audio
+          interfaces to support below.
+
+config SND_ELITE_WM8900
+	tristate "WM8900 Codec on S3 Elite Machine(Board)"
+	depends on SND_I2S_ELITE_SOC
+	select SND_SOC_WM8900
+        help
+          Say Y or M if you want to add support for WM8900 which serves
+          as an audio codec on S3 Elite-based Development Kit.
+
+config SND_ELITE_WM8960
+	tristate "WM8960 Codec on S3 Elite Machine(Board)"
+	depends on SND_I2S_ELITE_SOC
+	select SND_SOC_WM8960
+        help
+          Say Y or M if you want to add support for WM8960 which serves
+          as an audio codec on S3 Elite-based Development Kit.
+
+config SND_ELITE_CS4344
+	tristate "CS4344 Codec on S3 Elite Machien(Board)"
+	depends on SND_I2S_ELITE_SOC
+        select SND_SOC_CS4344
+        help
+          Say Y or M if you want to add support for WM8900 which serves
+          as an audio codec on S3 Elite-based Development Kit.

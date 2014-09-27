@@ -1,0 +1,230 @@
+/*
+ * Copyright (C) 2013 S3 Graphics - http://www.s3graphics.com/
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+/memreserve/ 0x7F800000 0x800000; /* reseverd 8M for GPU */
+
+/include/ "skeleton.dtsi"
+
+/ {
+	compatible = "s3graphics,elite1000";
+	interrupt-parent = <&intc>;
+
+	aliases {
+		serial0 = &uart0;
+		serial1 = &uart1;
+		/*elite1k-520016c-JSS-01 ++S*/
+		serial2 = &uart2;
+		/*elite1k-520016c-JSS-01 ++E*/
+	};
+
+	cpus {
+		cpu@0 {
+			compatible = "arm,cortex-a9";
+		};
+		cpu@1 {
+			compatible = "arm,cortex-a9";
+		};
+	};
+
+	/*
+	 * The soc node represents the soc top level view. It is uses for IPs
+	 * that are memory mapped.
+	 */
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		/*interrupt-parent = <&intc>;*/
+		ranges;
+
+		intc: interrupt-controller@0xd8019000 {
+			compatible = "arm,cortex-a9-gic";
+			interrupt-controller;
+			#interrupt-cells = <3>;
+			reg = < 0xd8019000 0x1000 >,
+		    	  < 0xd8018100 0x0100 >;
+		};
+
+		uart0: serial@d8200000 {
+			compatible = "s3graphics,elite1000-uart";
+			reg = < 0xd8200000 0x10000 >;
+			interrupts = < 0 32 0x04 >;
+		};
+
+		uart1: serial@d82b0000 {
+			compatible = "s3graphics,elite1000-uart";
+			reg = < 0xd82b0000 0x10000 >;
+			interrupts = < 0 33 0x04 >;
+		};
+
+		/*elite1k-520016c-JSS-01 ++S*/
+		uart2: serial@d8210000 {
+			compatible = "s3graphics,elite1000-uart";
+			reg = < 0xd8210000 0x10000 >;
+			interrupts = < 0 47 0x04 >;
+		};
+		/*elite1k-520016c-JSS-01 ++E*/
+
+		gpio: gpio@d8110000 {
+			compatible = "s3graphics,elite1000-gpio";
+			reg = < 0xd8110000 0x10000 >;
+			interrupts = < 0 84 0x04 >;
+			#gpio-cells = <2>;
+			gpio-controller;
+			#interrupt-cells = <2>;
+			interrupt-controller;
+		};
+
+		pinctrl: pinctrl@d8110000 {
+			compatible = "s3graphics,elite1000-pinctrl";
+			reg = < 0xd8110000 0x10000 >;    /* The same as GPIO */
+		};
+
+		sdmmc@d800a000 {
+			compatible = "s3graphics,elite1000-sdmmc";
+			linux,sdmmc-index = <0>;
+			reg = < 0xd800a000 0x400 >;
+			interrupts = < 0 20 0x04 >,
+						 < 0 21 0x04 >;
+			power-gpios = <&gpio 32 0>;
+			s3g,bus-width = <4>;
+		};
+
+		sdmmc@d800a400 {
+			compatible = "s3graphics,elite1000-sdmmc";
+			linux,sdmmc-index = <1>;
+			reg = < 0xd800a400 0x400 >;
+			interrupts = < 0 1 0x04 >,
+						 < 0 2 0x04 >;
+			power-gpios = <&gpio 64 0>;
+			s3g,bus-width = <4>;
+		};
+
+		sdmmc@d800a800 {
+			compatible = "s3graphics,elite1000-sdmmc";
+			linux,sdmmc-index = <2>;
+			reg = < 0xd800a800 0x400 >;
+			interrupts = < 0 56 0x04 >,
+						 < 0 57 0x04 >;
+			power-gpios = <&gpio 48 0>;
+			s3g,bus-width = <4>;
+			s3g,non-removable;
+		};
+
+		i2c0: i2c@d8280000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible =  "s3graphics,elite1000-i2c";
+			linux,i2c-index = <0>;
+			reg = < 0xd8280000 0x10000 >;
+			interrupts = < 0 19 0x04 >;
+		};
+
+		i2c1: i2c@d8320000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible =  "s3graphics,elite1000-i2c";
+			linux,i2c-index = <1>;
+			reg = < 0xd8320000 0x10000 >;
+			interrupts = < 0 18 0x04 >;
+		};
+
+		nand@d8009000 {
+			compatible =  "s3graphics,elite1000-nand";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			reg = < 0xd8009000 0x400 >;
+			interrupts = < 0 28 0x04 >,
+						 < 0 29 0x04 >;
+		};
+
+		gfx@d80a0000 {
+			compatible =  "s3graphics,elite1000-gfx";
+			reg = < 0xd80a0000 0x10000 >;
+			interrupts = < 0 4 0x04 >,
+						 < 0 5 0x04 >,
+ 						<0 0x1f 0x04>; /*Ned add for s3g*/
+		};
+
+		securityengine@d8006000 {
+			compatible =  "s3graphics,elite1000-se";
+			reg = < 0xd8006000 0x400 >;
+			interrupts = < 0 0 0x04 >;
+		};
+
+		sata@d800d000 {
+			compatible =  "s3graphics,elite1000-sata";
+			reg = < 0xd800d000 0x400 >;
+			interrupts = < 0 3 0x04 >;
+		};
+
+		i2s0: i2s@d8330000 {
+			compatible =  "s3graphics,elite1000-i2s";
+			reg = < 0xd8330000 0x10000 >;
+		};
+
+		pcm@d82d0000 {
+			compatible =  "s3graphics,elite1000-pcm";
+			reg = < 0xd82d0000 0x10000 >;
+		};
+
+		xtensa@d80efc00 {
+			compatible =  "s3graphics,elite1000-xtensa";
+			reg = < 0xd80efc00 0x10000 >;
+			interrupts = < 0 23 0x04 >;
+		};
+
+		cir@d8270000 {
+			compatible =  "s3graphics,elite1000-cir";
+			reg = < 0xd8270000 0x10000 >;
+			interrupts = < 0 55 0x04 >;
+		};
+
+		kpad@d8260000 {
+			compatible =  "s3graphics,elite1000-kpad";
+			reg = < 0xd8260000 0x10000 >;
+			interrupts = < 0 8 0x04 >;
+		};
+
+		rtc@d8100000 {
+			compatible =  "s3graphics,elite1000-rtc";
+			reg = < 0xd8100000 0x10000 >;
+			interrupts = < 0 48 0x04 >;
+		};
+
+		wdt@d839e040 {
+			compatible =  "s3graphics,elite1000-wdt";
+			reg = < 0xd839e040 0xf >;
+		};
+
+		uhci1: uhci@d8007a00 {
+			compatible =  "s3graphics,elite1000-uhci";
+			reg = < 0xd8007a00 0x200 >;
+			interrupts = < 0 26 0x04 >;
+		};
+
+		uhci2: uhci@d8008c00 {
+			compatible =  "s3graphics,elite1000-uhci";
+			reg = < 0xd8008c00 0x200 >;
+			interrupts = < 0 26 0x04 >;
+		};
+
+		ehci@d8007800 {
+			compatible =  "s3graphics,elite1000-ehci";
+			reg = < 0xd8007800 0x200 >;
+			interrupts = < 0 26 0x04 >;
+		};
+
+		pmc@d8130000 {
+			compatible =  "s3graphics,elite1000-pmc";
+			reg = < 0xd8130000 0x10000 >;
+			reg-names = "pmc_regs";
+		};
+		
+	};
+};

@@ -19,6 +19,7 @@ snd-hda-codec-ca0110-objs :=	patch_ca0110.o
 snd-hda-codec-ca0132-objs :=	patch_ca0132.o
 snd-hda-codec-conexant-objs :=	patch_conexant.o
 snd-hda-codec-via-objs :=	patch_via.o
+snd-hda-codec-s3hdmi-objs :=    patch_s3hdmi.o
 snd-hda-codec-hdmi-objs :=	patch_hdmi.o hda_eld.o
 
 # common driver
@@ -54,6 +55,9 @@ obj-$(CONFIG_SND_HDA_INTEL) += snd-hda-codec-conexant.o
 endif
 ifdef CONFIG_SND_HDA_CODEC_VIA
 obj-$(CONFIG_SND_HDA_INTEL) += snd-hda-codec-via.o
+endif
+ifdef CONFIG_SND_HDA_CODEC_S3HDMI
+obj-$(CONFIG_SND_HDA_INTEL) += snd-hda-codec-s3hdmi.o
 endif
 ifdef CONFIG_SND_HDA_CODEC_HDMI
 obj-$(CONFIG_SND_HDA_INTEL) += snd-hda-codec-hdmi.o

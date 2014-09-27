@@ -3840,9 +3840,11 @@ static void hub_events(void)
 				msleep(100);	/* Cool down */
 				hub_power_on(hub, true);
 				hub_port_status(hub, i, &status, &unused);
-				if (status & USB_PORT_STAT_OVERCURRENT)
-					dev_err(hub_dev, "over-current "
-						"condition on port %d\n", i);
+				/*S3 HW bug*/
+                                //if (status & USB_PORT_STAT_OVERCURRENT)
+                                //      dev_err(hub_dev, "over-current "
+                                //              "condition on port %d\n", i);
+
 			}
 
 			if (portchange & USB_PORT_STAT_C_RESET) {

@@ -197,6 +197,8 @@ machine-$(CONFIG_MACH_SPEAR310)		:= spear3xx
 machine-$(CONFIG_MACH_SPEAR320)		:= spear3xx
 machine-$(CONFIG_MACH_SPEAR600)		:= spear6xx
 machine-$(CONFIG_ARCH_ZYNQ)		:= zynq
+machine-$(CONFIG_ARCH_ELITE)            := elite
+machine-$(CONFIG_ARCH_ELITE2000)            := elite2000
 
 # Platform directory name.  This list is sorted alphanumerically
 # by CONFIG_* macro name.

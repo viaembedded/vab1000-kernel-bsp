@@ -769,6 +769,13 @@ config RTC_DRV_S3C
 	  This driver can also be build as a module. If so, the module
 	  will be called rtc-s3c.
 
+config  RTC_DRV_ELITE
+        tristate "S3 Elite soc RTC"
+        help
+          This will include RTC support for S3 SoCs. If
+          you want to include RTC support for any machine, kindly
+          select this in the respective mach-XXXX/Kconfig file.
+
 config RTC_DRV_EP93XX
 	tristate "Cirrus Logic EP93XX"
 	depends on ARCH_EP93XX

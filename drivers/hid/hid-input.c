@@ -641,9 +641,9 @@ static void hidinput_configure_usage(struct hid_input *hidinput, struct hid_fiel
 			map_key_clear(BTN_STYLUS2);
 			break;
 
-		case 0x51: /* ContactID */
-			device->quirks |= HID_QUIRK_MULTITOUCH;
-			goto unknown;
+//elite1k-320109c-JSS-01 --		case 0x51: /* ContactID */
+//elite1k-320109c-JSS-01 --			device->quirks |= HID_QUIRK_MULTITOUCH;
+//elite1k-320109c-JSS-01 --			goto unknown;
 
 		default:  goto unknown;
 		}

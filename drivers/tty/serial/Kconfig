@@ -1360,4 +1360,16 @@ config SERIAL_EFM32_UART_CONSOLE
 	depends on SERIAL_EFM32_UART=y
 	select SERIAL_CORE_CONSOLE
 
+config SERIAL_ELITE_UART
+        tristate "ELITE UART port"
+        depends on ARCH_ELITE || ARCH_ELITE2000
+        select SERIAL_CORE
+        help
+          This driver support UART ports on Elite SoCs
+
+config SERIAL_ELITE_UART_CONSOLE
+        bool "ELITE UART console support"
+        depends on SERIAL_ELITE_UART=y
+        select SERIAL_CORE_CONSOLE
+
 endmenu

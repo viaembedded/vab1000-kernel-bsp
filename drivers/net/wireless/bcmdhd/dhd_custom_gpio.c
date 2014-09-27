@@ -1,6 +1,6 @@
 /*
 * Customer code to add GPIO control during WLAN start/stop
-* Copyright (C) 1999-2013, Broadcom Corporation
+* Copyright (C) 1999-2012, Broadcom Corporation
 * 
 *      Unless you and Broadcom execute a separate written software license
 * agreement governing use of this software, this software is licensed to you
@@ -20,7 +20,7 @@
 * software in any way with any other Broadcom software provided under a license
 * other than the GPL, without Broadcom's express prior written consent.
 *
-* $Id: dhd_custom_gpio.c 389250 2013-03-06 02:05:03Z $
+* $Id: dhd_custom_gpio.c 353167 2012-08-24 22:11:30Z $
 */
 
 #include <typedefs.h>
@@ -38,12 +38,13 @@
 #define WL_TRACE(x)
 
 #ifdef CUSTOMER_HW
+#if defined(CUSTOMER_OOB)
+extern int bcm_wlan_get_oob_irq(void);
+#endif
 extern  void bcm_wlan_power_off(int);
 extern  void bcm_wlan_power_on(int);
 #endif /* CUSTOMER_HW */
 #if defined(CUSTOMER_HW2)
-
-
 #ifdef CONFIG_WIFI_CONTROL_FUNC
 int wifi_set_power(int on, unsigned long msec);
 int wifi_get_irq_number(unsigned long *irq_flags_ptr);
@@ -63,7 +64,7 @@ void *wifi_get_country_code(char *ccode) { return NULL; }
 extern int sdioh_mmc_irq(int irq);
 #endif /* (BCMLXSDMMC)  */
 
-#if defined(CUSTOMER_HW3)
+#ifdef CUSTOMER_HW3
 #include <mach/gpio.h>
 #endif
 
@@ -90,6 +91,9 @@ int dhd_customer_oob_irq_map(unsigned long *irq_flags_ptr)
 
 #if defined(CUSTOMER_HW2)
 	host_oob_irq = wifi_get_irq_number(irq_flags_ptr);
+
+#elif defined(CUSTOMER_OOB)
+	host_oob_irq = bcm_wlan_get_oob_irq();
 
 #else
 #if defined(CUSTOM_OOB_GPIO_NUM)
@@ -134,6 +138,7 @@ dhd_customer_gpio_wlan_ctrl(int onoff)
 #if defined(CUSTOMER_HW2)
 			wifi_set_power(0, 0);
 #endif
+			mdelay(100);
 			WL_ERROR(("=========== WLAN placed in RESET ========\n"));
 		break;
 
@@ -146,6 +151,7 @@ dhd_customer_gpio_wlan_ctrl(int onoff)
 #if defined(CUSTOMER_HW2)
 			wifi_set_power(1, 0);
 #endif
+			mdelay(100);
 			WL_ERROR(("=========== WLAN going back to live  ========\n"));
 		break;
 
@@ -155,6 +161,7 @@ dhd_customer_gpio_wlan_ctrl(int onoff)
 #ifdef CUSTOMER_HW
 			bcm_wlan_power_off(1);
 #endif /* CUSTOMER_HW */
+			WL_ERROR(("=========== WLAN placed in POWER OFF ========\n"));
 		break;
 
 		case WLAN_POWER_ON:
@@ -162,9 +169,10 @@ dhd_customer_gpio_wlan_ctrl(int onoff)
 				__FUNCTION__));
 #ifdef CUSTOMER_HW
 			bcm_wlan_power_on(1);
-			/* Lets customer power to get stable */
-			OSL_DELAY(200);
 #endif /* CUSTOMER_HW */
+			/* Lets customer power to get stable */
+			mdelay(100);
+			WL_ERROR(("=========== WLAN placed in POWER ON ========\n"));
 		break;
 	}
 }

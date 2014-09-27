@@ -790,6 +790,12 @@ static bool joydev_match(struct input_handler *handler, struct input_dev *dev)
 	/* Avoid tablets, digitisers and similar devices */
 	if (test_bit(EV_KEY, dev->evbit) && test_bit(BTN_DIGI, dev->keybit))
 		return false;
+//elite1k-320109c-JSS-01 ++S
+        /* Avoid EETI virtual devices */
+        #define VID_EETI 0x0EEF
+        if ((BUS_VIRTUAL == dev->id.bustype) && (VID_EETI == dev->id.vendor))
+                return false;
+//elite1k-320109c-JSS-01 ++E
 
 	return true;
 }

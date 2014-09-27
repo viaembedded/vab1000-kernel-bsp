@@ -3,7 +3,7 @@
 #
 
 config PINCTRL
-	bool
+	bool "Pinctrl support"
 	depends on EXPERIMENTAL
 
 if PINCTRL
@@ -74,6 +74,13 @@ config PINCTRL_U300
 	depends on ARCH_U300
 	select PINMUX
 	select GENERIC_PINCONF
+
+config PINCTRL_ELITE
+        bool "Elite SoC pin controller driver"
+        depends on ARCH_ELITE_1000
+        select PINMUX
+    select PINCONF
+        select GENERIC_PINCONF
 
 config PINCTRL_COH901
 	bool "ST-Ericsson U300 COH 901 335/571 GPIO"

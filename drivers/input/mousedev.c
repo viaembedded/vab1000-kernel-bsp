@@ -1054,8 +1054,22 @@ static const struct input_device_id mousedev_ids[] = {
 
 MODULE_DEVICE_TABLE(input, mousedev_ids);
 
+//elite1k-320109c-JSS-01 ++S
+static bool mousedev_match(struct input_handler *handler, struct input_dev *dev)
+{
+        /*Avoid EETI USB touchscreens */
+        #define VID_EETI 0x0EEF
+        if ((BUS_USB == dev->id.bustype) && (VID_EETI == dev->id.vendor))
+                return false;
+        if ((BUS_VIRTUAL == dev->id.bustype) && (VID_EETI == dev->id.vendor))
+                return false;
+        return true;
+}
+//elite1k-320109c-JSS-01 ++E
+
 static struct input_handler mousedev_handler = {
 	.event =	mousedev_event,
+	.match =        mousedev_match, /* Added by EETI */ //elite1k-320109c-JSS-01 ++
 	.connect =	mousedev_connect,
 	.disconnect =	mousedev_disconnect,
 	.fops =		&mousedev_fops,

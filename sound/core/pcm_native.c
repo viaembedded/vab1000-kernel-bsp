@@ -39,6 +39,7 @@
 #include <dma-coherence.h>
 #endif
 
+
 /*
  *  Compatibility
  */
@@ -3490,3 +3491,35 @@ const struct file_operations snd_pcm_f_ops[2] = {
 		.get_unmapped_area =	snd_pcm_get_unmapped_area,
 	}
 };
+
+int snd_get_pcm_ops(struct file_operations **ops, int index)
+{
+    if(index > 2)
+    {
+        return -1;
+    }
+    *ops = &(snd_pcm_f_ops[index]);
+    return 0;
+}
+EXPORT_SYMBOL(snd_get_pcm_ops);
+
+int snd_get_pcm_sleep(struct file *file, wait_queue_head_t **sleep)
+{
+    struct snd_pcm_file *pcm_file = file->private_data;
+    struct snd_pcm_substream *substream = pcm_file->substream;
+    struct snd_pcm_runtime *runtime = substream->runtime;
+    *sleep = &runtime->sleep;
+    return 0;
+}
+EXPORT_SYMBOL(snd_get_pcm_sleep);
+
+int snd_get_pcm_dma_area(struct file *file, unsigned char **area)
+{
+    struct snd_pcm_file *pcm_file = file->private_data;
+    struct snd_pcm_substream *substream = pcm_file->substream;
+    struct snd_pcm_runtime *runtime = substream->runtime;
+    *area = runtime->dma_area;
+    return 0;
+}
+EXPORT_SYMBOL(snd_get_pcm_dma_area);
+

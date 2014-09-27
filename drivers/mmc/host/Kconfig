@@ -24,6 +24,13 @@ config MMC_PXA
 
 	  If unsure, say N.
 
+config MMC_ELITE
+    tristate "S3 Graphics Elite SoC SD/MMC/eMMC Host Controller support"
+    depends on ARCH_ELITE_1000 
+    help
+      This select the Elite SD/MMC/eMMC Host Controller, say Y or M here.
+      If unsure, say N.
+
 config MMC_SDHCI
 	tristate "Secure Digital Host Controller Interface support"
 	depends on HAS_DMA
@@ -152,6 +159,17 @@ config MMC_SDHCI_DOVE
 	  Marvell's Dove SoC.
 
 	  If you have a controller with this interface, say Y or M here.
+
+	  If unsure, say N.
+
+config  MMC_SDHCI_ELITE 
+	tristate "SDHCI platform support for the Elite2000 SD/MMC Host Controller"
+	depends on ARCH_ELITE_2000
+	depends on MMC_SDHCI_PLTFM
+	select MMC_SDHCI_IO_ACCESSORS
+	help
+	  This selects the Tegra SD/MMC controller. If you have a ELITE2000
+	  platform with SD or MMC devices, say Y or M here.
 
 	  If unsure, say N.
 

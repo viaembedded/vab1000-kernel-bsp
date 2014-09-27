@@ -62,3 +62,6 @@ obj-$(CONFIG_USB_SERIAL_WHITEHEAT)		+= whiteheat.o
 obj-$(CONFIG_USB_SERIAL_XIRCOM)			+= keyspan_pda.o
 obj-$(CONFIG_USB_SERIAL_VIVOPAY_SERIAL)		+= vivopay-serial.o
 obj-$(CONFIG_USB_SERIAL_ZIO)			+= zio.o
+# elite1k-520016c.d1-GLU-08 - Start
+obj-$(CONFIG_USB_SERIAL_VIZZINI)                += vizzini.o
+# elite1k-520016c.d1-GLU-08 - End

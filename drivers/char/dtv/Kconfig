@@ -1,0 +1,73 @@
+#
+# DTV device configuration
+#
+
+menuconfig ELITE_DTV
+	tristate "DTV Hardware Support"
+	---help---
+	  Following include dtv drivers
+if ELITE_DTV
+config ELITE_DEMUX0
+	tristate "elite demux0 driver"
+	depends on ARCH_ELITE
+	default n
+	---help---
+	  Demux0 elite driver
+
+config ELITE_DEMUX1
+	tristate "elite demux1 driver"
+	depends on ARCH_ELITE
+	default n
+	---help---
+	  Demux1 elite driver
+
+config ELITE_DEMUX2
+	tristate "elite demux2 driver"
+	depends on ARCH_ELITE
+	default n
+	---help---
+	  Demux2 elite driver
+
+config ELITE_DEMUX3
+	tristate "elite demux3 driver"
+	depends on ARCH_ELITE
+	default n
+	---help---
+	  Demux3 elite driver
+
+config ELITE_FRONTEND
+	tristate "elite frontend driver"
+	depends on ARCH_ELITE
+	default n
+	---help---
+	   Frontend driver
+
+config ELITE_SMARTCARD
+	tristate "elite smartcard driver"
+	depends on ARCH_ELITE
+	default n
+	---help---
+	  elite smart card driver
+
+config ELITE_FRONTPANEL
+	tristate "elite frontpanel driver"
+	depends on ARCH_ELITE
+	default n
+	---help---
+	  elite frontpanel driver
+
+config ELITE_DTV_MMAP
+	tristate "elite crypto client driver for DTV"
+	depends on ARCH_ELITE
+	depends on CRYPTO_DEV_ELITE_CRYPTO
+	default n
+	---help---
+	  elite frontpanel driver
+
+config ELITE_DEMOD
+	tristate "elite demod driver"
+	depends on ARCH_ELITE
+	default n
+	---help---
+	   Demod driver
+endif

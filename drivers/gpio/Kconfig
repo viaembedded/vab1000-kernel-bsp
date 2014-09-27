@@ -3,7 +3,7 @@
 #
 
 config ARCH_WANT_OPTIONAL_GPIOLIB
-	bool
+	bool "want optional GPIOLIB support"
 	help
 	  Select this config option from the architecture Kconfig, if
 	  it is possible to use gpiolib on the architecture, but let the
@@ -13,7 +13,7 @@ config ARCH_WANT_OPTIONAL_GPIOLIB
 	  decide whether he needs it or not.
 
 config ARCH_REQUIRE_GPIOLIB
-	bool
+	bool "require GPIOLIB support"
 	select GPIOLIB
 	help
 	  Platforms select gpiolib if they use this infrastructure
@@ -346,6 +346,12 @@ config GPIO_WM8994
 	help
 	  Say yes here to access the GPIO signals of WM8994 audio hub
 	  CODECs from Wolfson Microelectronics.
+
+config GPIO_ELITE
+        tristate "Elite SoC GPIOs controller"
+        depends on ARCH_ELITE_1000
+        help
+          Say yes here to enable the elite SoC GPIO controller support.
 
 config GPIO_ADP5520
 	tristate "GPIO Support for ADP5520 PMIC"

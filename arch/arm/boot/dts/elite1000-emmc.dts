@@ -1,0 +1,193 @@
+/*
+ * Copyright (C) 2013 S3 Graphics - http://www.s3graphics.com/
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+/dts-v1/;
+
+/include/ "elite1000.dtsi"
+
+
+/ {
+	model = "S3GRAPHICS Elite1000 EMMC evaboard";
+	compatible = "s3graphics,board-emmc-dt", "s3graphics,elite1000";
+
+	chosen {
+		bootargs = "console=ttyS1,115200n8 root=/dev/mmcblk0p1 init=/init rootdelay=2";
+	};
+
+//;ysw_debug	memory {
+//;ysw_debug		reg = < 0x2000000 0x7F800000 >;
+//;ysw_debug	};
+
+	soc {
+//;elite1k-520016c-JSS-01		uart0: serial@d8200000 {
+//;elite1k-520016c-JSS-01			status = "disabled";
+//;elite1k-520016c-JSS-01		};
+
+		cir@d8270000 {
+			s3g,cir-mode = <0x0>;
+			s3g,wakeup-cfg = <0x0>;
+		};
+
+//;ysw_debug		sdmmc2: sdmmc@d800a800 {
+//;ysw_debug			status = "disabled";
+//;ysw_debug		};
+//;ysw_debug - start
+//		sdmmc2: sdmmc@d800a800 {
+//			status = "enabled";
+//		};
+//;ysw_debug - end
+
+		ehci@d8007800 {
+			pwr-gpios = <&gpio 480 0>;
+			pwr123-gpios = <&gpio 22 0>;
+		};
+
+		i2c1: i2c@d8320000 {
+			wm8960: wm8960@1a {
+				compatible = "wlf,wm8960";
+				reg = <0x1a>;
+			};
+			tuner@1c {
+				compatible = "s3graphics,tuner";
+				reg = <0x1c>;
+			};
+			ilitek@41 {
+				compatible = "s3graphics,elite1000-touchscreen";
+				reg = <0x41>;
+			};
+			/*
+			wm8326@34 {
+				compatible = "wlf,wm8326";
+				reg = <0x34>;
+			};
+			*/
+		};
+
+		sound {
+			/* for A2 Chip */
+			compatible = "s3graphics,elite1000-audio", 
+							"s3graphics,elite1000-audio-wm8960";
+			s3g,model = "elite-audio";
+
+			s3g,audio-routing =
+			"Headphone Jack", "HPOUTR";
+
+			s3g,i2s-controller = <&i2s0>;
+			s3g,audio-codec = <&wm8960>;
+		};
+
+		nand@d8009000 {
+			nand-bus-width = <8>;
+			nand-ecc-mode = "hw_syndrome";
+			nand-on-flash-bbt;
+
+			secureboot@0 {
+				label = "secureboot";
+				reg = <0x0 0x400000>;
+				read-only;
+			};
+
+			secureos@400000 {
+				label = "secureos";
+				reg = <0x400000 0x400000>;
+				read-only;
+			};
+
+			audiofirmware@800000 {
+				label = "audiofirmware";
+				reg = <0x800000 0x400000>;
+			};
+
+			bdib_ro@c00000 {
+				label = "bdib_ro";
+				reg = <0xc00000 0x200000>;
+			};
+
+			uboot_env@e00000 {
+				label = "uboot_env";
+				reg = <0xe00000 0x200000>;
+			};
+
+			uboot@1000000 {
+				label = "uboot";
+				reg = <0x1000000 0x400000>;
+				read-only;
+			};
+
+			uboot_logo@1400000 {
+				label = "uboot_logo";
+				reg = <0x1400000 0x800000>;
+			};
+
+			bdib_rw@1c00000 {
+				label = "bdib_rw";
+				reg = <0x1c00000 0x300000>;
+			};
+
+			nvram@1f00000 {
+				label = "nvram";
+				reg = <0x1f00000 0x400000>;
+			};
+
+			otaloader@2300000 {
+				label = "otaloader";
+				reg = <0x2300000 0x2000000>;
+			};
+
+			iploader@4300000 {
+				label = "iploader";
+				reg = <0x4300000 0x2000000>;
+			};
+
+			irdeto_nvram@6300000 {
+				label = "irdeto_nvram";
+				reg = <0x6300000 0x400000>;
+			};
+
+			boot@6300000 {
+				label = "boot";
+				reg = <0x6700000 0x1000000>;
+			};
+
+			minidvb@7700000 {
+				label = "minidvb";
+				reg = <0x7700000 0x2000000>;
+			};
+
+			recovery@9700000 {
+				label = "recovery";
+				reg = <0x9700000 0x2000000>;
+			};
+
+			system@b700000 {
+				label = "system";
+				reg = <0xb700000 0x20000000>;
+				read-only;
+			};
+
+			package@2b700000 {
+				label = "package";
+				reg = <0x2b700000 0x8000000>;
+			};
+
+			cache@33700000 {
+				label = "cache";
+				reg = <0x33700000 0x20000000>;
+			};
+
+			backup@53700000 {
+				label = "backup";
+				reg = <0x53700000 0x40000000>;
+			};
+
+			data@ffc00000 {
+				label = "data";
+				reg = <0x93700000 0x6c500000>;
+			};
+		};
+	};
+};

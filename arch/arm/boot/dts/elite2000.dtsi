@@ -1,0 +1,86 @@
+/*
+ * Copyright (C) 2013 S3 Graphics - http://www.s3graphics.com/
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+/memreserve/ 0x7F800000 0x800000; /* reseverd 8M for GPU */
+
+/include/ "skeleton.dtsi"
+
+/ {
+	compatible = "s3graphics,elite2000";
+	interrupt-parent = <&intc>;
+
+	aliases {
+		serial0 = &uart0;
+		serial1 = &uart1;
+	};
+
+	cpus {
+		cpu@0 {
+			compatible = "arm,cortex-a7";
+		};
+		cpu@1 {
+			compatible = "arm,cortex-a7";
+		};
+	};
+
+	/*
+	 * The soc node represents the soc top level view. It is uses for IPs
+	 * that are memory mapped.
+	 */
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		/*interrupt-parent = <&intc>;*/
+		ranges;
+
+		intc: interrupt-controller@0xd900a000 {
+			compatible = "arm,cortex-a9-gic";
+			interrupt-controller;
+			#interrupt-cells = <3>;
+			reg = < 0xd9009000 0x1000 >,
+		    	  < 0xd900a000 0x0100 >;
+		};
+
+		uart0: serial@d8200000 {
+			compatible = "s3graphics,elite2000-uart";
+			reg = < 0xd8200000 0x10000 >;
+			interrupts = < 0 75 0x04 >;
+		};
+
+		uart1: serial@d82b0000 {
+			compatible = "s3graphics,elite2000-uart";
+			reg = < 0xd82b0000 0x10000 >;
+			interrupts = < 0 33 0x04 >;
+		};
+
+		sdmmc: sdhci@d800a800 {
+			compatible = "s3graphics,elite2000-sdhci";
+			reg = < 0xd800a800 0x400 >;
+			interrupts = < 0 107 0x04 >;
+                        clock-frequency = <25000000>;
+		};
+
+		emmc: sdhci@d800a000 {
+			compatible = "s3graphics,elite2000-sdhci";
+			reg = < 0xd800a000 0x400 >;
+			interrupts = < 0 104 0x04 >;
+                        clock-frequency = <25000000>;
+		};
+
+		i2s0: i2s@d8330000 {
+			compatible =  "s3graphics,elite2000-i2s";
+			reg = < 0xd8330000 0x10000 >;
+		};
+		xtensa: xtensa@d80efc00 {
+			compatible = "s3graphics,elite2000-xtensa";
+			reg = < 0xd80efc00 0x10000 >;
+			interrupts = < 0 85 0x04 >;
+                };
+	};
+};

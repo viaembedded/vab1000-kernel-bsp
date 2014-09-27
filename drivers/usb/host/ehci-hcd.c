@@ -1282,12 +1282,17 @@ MODULE_LICENSE ("GPL");
 
 #ifdef CONFIG_USB_EHCI_HCD_OMAP
 #include "ehci-omap.c"
-#define        PLATFORM_DRIVER         ehci_hcd_omap_driver
+#define PLATFORM_DRIVER         ehci_hcd_omap_driver
 #endif
 
 #ifdef CONFIG_PPC_PS3
 #include "ehci-ps3.c"
 #define	PS3_SYSTEM_BUS_DRIVER	ps3_ehci_driver
+#endif
+
+#ifdef CONFIG_EHCI_ELITE
+#include "elite-ehci.c"
+#define PLATFORM_DRIVER	      elite_ehci_driver
 #endif
 
 #ifdef CONFIG_USB_EHCI_HCD_PPC_OF
@@ -1387,7 +1392,7 @@ MODULE_LICENSE ("GPL");
 
 #if !defined(PCI_DRIVER) && !defined(PLATFORM_DRIVER) && \
     !defined(PS3_SYSTEM_BUS_DRIVER) && !defined(OF_PLATFORM_DRIVER) && \
-    !defined(XILINX_OF_PLATFORM_DRIVER)
+    !defined(XILINX_OF_PLATFORM_DRIVER)&&!defined(CONFIG_EHCI_ELITE)
 #error "missing bus glue for ehci-hcd"
 #endif
 
@@ -1447,8 +1452,17 @@ static int __init ehci_hcd_init(void)
 	if (retval < 0)
 		goto clean4;
 #endif
-	return retval;
 
+#ifdef CONFIG_EHCI_ELITE
+	retval = platform_driver_register(&elite_ehci_driver);
+	if (retval < 0)
+                goto clean5;
+#endif
+	return retval;
+#ifdef CONFIG_EHCI_ELITE
+
+clean5:
+#endif
 #ifdef XILINX_OF_PLATFORM_DRIVER
 	/* platform_driver_unregister(&XILINX_OF_PLATFORM_DRIVER); */
 clean4:

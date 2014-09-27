@@ -1,0 +1,18 @@
+#
+# SLIMBUS driver configuration
+#
+menuconfig SLIMBUS
+	bool "Slimbus support"
+	depends on HAS_IOMEM
+	help
+	  Slimbus is standard interface between baseband and
+	  application processors and peripheral components in mobile
+	  terminals.
+
+if SLIMBUS
+config SLIMBUS_MSM_CTRL
+	tristate "Elite Slimbus Master Component"
+	help
+	  Select driver for Elite2k Slimbus Master Component.
+
+endif

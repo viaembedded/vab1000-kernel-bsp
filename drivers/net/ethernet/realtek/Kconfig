@@ -115,4 +115,17 @@ config R8169
 	  To compile this driver as a module, choose M here: the module
 	  will be called r8169.  This is recommended.
 
+config R8168_N
+	tristate "Realtek 8168_n gigabit ethernet support"
+	default y
+	depends on PCI
+	select FW_LOADER
+	select CRC32
+	select NET_CORE
+	select MII
+	---help---
+	  Say Y here if you have a Realtek 8168_n PCI Gigabit Ethernet adapter.
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called r8168_n.  This is recommended.
 endif # NET_VENDOR_REALTEK

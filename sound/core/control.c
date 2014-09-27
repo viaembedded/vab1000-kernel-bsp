@@ -30,6 +30,7 @@
 #include <sound/info.h>
 #include <sound/control.h>
 
+
 /* max number of user-defined controls */
 #define MAX_USER_CONTROLS	32
 #define MAX_CONTROL_COUNT	1028
@@ -1588,6 +1589,13 @@ static const struct file_operations snd_ctl_f_ops =
 	.compat_ioctl =	snd_ctl_ioctl_compat,
 	.fasync =	snd_ctl_fasync,
 };
+
+int snd_get_ctl_ops(struct file_operations **ops)
+{
+    *ops = &(snd_ctl_f_ops);
+    return 0;
+}
+EXPORT_SYMBOL(snd_get_ctl_ops);
 
 /*
  * registration of the control device

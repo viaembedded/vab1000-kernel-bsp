@@ -849,7 +849,12 @@ static const char hcd_name[] = "uhci_hcd";
 #define PLATFORM_DRIVER		uhci_grlib_driver
 #endif
 
-#if !defined(PCI_DRIVER) && !defined(PLATFORM_DRIVER)
+#ifdef CONFIG_UHCI_ELITE
+#include "elite-uhci.c"
+#define PLATFORM_DRIVER		elite_uhci_driver
+#endif
+
+#if !defined(PCI_DRIVER) && !defined(PLATFORM_DRIVER) && !defined(CONFIG_UHCI_ELITE)
 #error "missing bus glue for uhci-hcd"
 #endif
 

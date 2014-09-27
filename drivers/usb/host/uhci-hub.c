@@ -146,7 +146,7 @@ static void uhci_check_ports(struct uhci_hcd *uhci)
 			if (time_after_eq(jiffies, uhci->ports_timeout)) {
 				CLR_RH_PORTSTAT(USBPORTSC_PR);
 				udelay(10);
-
+				mdelay(10);
 				/* HP's server management chip requires
 				 * a longer delay. */
 				if (uhci->wait_for_hp)

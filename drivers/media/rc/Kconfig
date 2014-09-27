@@ -26,6 +26,16 @@ config LIRC
 
 source "drivers/media/rc/keymaps/Kconfig"
 
+config IR_OCN_DECODER
+	tristate "Enable IR raw decoder for the OCN protocol"
+	depends on RC_CORE
+	select BITREVERSE
+	default y
+
+	---help---
+	   Enable this option if you have IR with OCN protocol, and
+	   if the IR is decoded in software
+
 config IR_NEC_DECODER
 	tristate "Enable IR raw decoder for the NEC protocol"
 	depends on RC_CORE
@@ -274,5 +284,12 @@ config IR_GPIO_CIR
 
 	   To compile this driver as a module, choose M here: the module will
 	   be called gpio-ir-recv.
+config IR_ELITE_GPIO_CIR
+	tristate "Elite GPIO IR remote control"
+	depends on RC_CORE
+	---help---
+	   Say Y if you want to use Elite GPIO based IR Receiver.
 
+	   To compile this driver as a module, choose M here: the module will
+	   be called elite-gpio-ir-recv.
 endif #RC_CORE

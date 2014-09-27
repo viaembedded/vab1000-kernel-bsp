@@ -3046,8 +3046,19 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 		 */
 		mtd->erasesize = type->erasesize;
 		mtd->writesize = type->pagesize;
-		mtd->oobsize = mtd->writesize / 32;
-		busw = type->options & NAND_BUSWIDTH_16;
+		//mtd->oobsize = mtd->writesize / 32;
+		//busw = type->options & NAND_BUSWIDTH_16;
+		if (type->id == 0x68)
+                {
+                        //mtd->oobsize = 224;
+                        mtd->oobsize = 218;
+                        busw = 0;
+                }
+                else
+                {
+                        mtd->oobsize = mtd->writesize / 32;
+                        busw = type->options & NAND_BUSWIDTH_16;
+                }
 
 		/*
 		 * Check for Spansion/AMD ID + repeating 5th, 6th byte since

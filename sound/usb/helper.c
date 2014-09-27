@@ -92,7 +92,7 @@ int snd_usb_ctl_msg(struct usb_device *dev, unsigned int pipe, __u8 request,
 			return -ENOMEM;
 	}
 	err = usb_control_msg(dev, pipe, request, requesttype,
-			      value, index, buf, size, 1000);
+			      value, index, buf, size, 2000);
 	if (size > 0) {
 		memcpy(data, buf, size);
 		kfree(buf);

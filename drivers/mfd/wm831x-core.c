@@ -1604,7 +1604,7 @@ struct regmap_config wm831x_regmap_config = {
 	.reg_bits = 16,
 	.val_bits = 16,
 
-	.cache_type = REGCACHE_RBTREE,
+	.cache_type = REGCACHE_NONE,//REGCACHE_RBTREE,
 
 	.max_register = WM831X_DBE_CHECK_DATA,
 	.readable_reg = wm831x_reg_readable,
@@ -1869,6 +1869,12 @@ int wm831x_device_init(struct wm831x *wm831x, unsigned long id, int irq)
 			goto err_irq;
 		}
 	}
+
+//;elite1k-Ned-start
+		int reg;
+		reg = wm831x_reg_read(wm831x,WM831X_DC2_ON_CONFIG);
+		wm831x_reg_write(wm831x, WM831X_DC2_ON_CONFIG, 0xc122);
+//;elite1k-Ned-end
 
 	return 0;
 

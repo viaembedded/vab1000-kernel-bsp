@@ -243,6 +243,15 @@ config TOUCHSCREEN_FUJITSU
 	  To compile this driver as a module, choose M here: the
 	  module will be called fujitsu-ts.
 
+config TOUCHSCREEN_ILI
+        tristate "ILI touchscreen panel support"
+        depends on I2C
+        help
+          Say Y here to enable support for I2C connected ILI touch panels.
+
+          To compile this driver as a module, choose M here: the
+          module will be called ili_ts.
+
 config TOUCHSCREEN_ILI210X
 	tristate "Ilitek ILI210X based touchscreen"
 	depends on I2C

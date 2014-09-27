@@ -666,6 +666,40 @@ config ARCH_W90X900
 	  <http://www.nuvoton.com/hq/enu/ProductAndSales/ProductLines/
 		ConsumerElectronicsIC/ARMMicrocontroller/ARMMicrocontroller>
 
+config ARCH_ELITE
+        bool "S3Graphics Elite"
+        select CPU_V7
+        select ARM_GIC
+        select CLKDEV_LOOKUP
+        select CLKSRC_MMIO
+        select GENERIC_CLOCKEVENTS
+        select HAVE_CLK
+        select HAVE_SMP
+        select MULTI_IRQ_HANDLER
+        select MIGHT_HAVE_PCI
+        select MIGHT_HAVE_CACHE_L2X0
+        select NEED_MACH_IO_H if PCI
+        select ARCH_HAS_CPUFREQ
+        help
+          This enables support for S3Graphics Elite based systems.
+
+config ARCH_ELITE2000
+        bool "S3Graphics Elite2000"
+        select CPU_V7
+        select ARM_GIC
+        select CLKDEV_LOOKUP
+        select CLKSRC_MMIO
+        select GENERIC_CLOCKEVENTS
+        select HAVE_CLK
+        select HAVE_SMP
+        select MULTI_IRQ_HANDLER
+        select MIGHT_HAVE_PCI
+        select MIGHT_HAVE_CACHE_L2X0
+        select NEED_MACH_IO_H if PCI
+        select ARCH_HAS_CPUFREQ
+        help
+          This enables support for S3Graphics Elite2K based systems.
+
 config ARCH_TEGRA
 	bool "NVIDIA Tegra"
 	select CLKDEV_LOOKUP
@@ -1114,6 +1148,14 @@ source "arch/arm/mach-exynos/Kconfig"
 source "arch/arm/mach-shmobile/Kconfig"
 
 source "arch/arm/mach-tegra/Kconfig"
+
+if ARCH_ELITE
+source "arch/arm/mach-elite/Kconfig"
+endif
+
+if ARCH_ELITE2000
+source "arch/arm/mach-elite2000/Kconfig"
+endif
 
 source "arch/arm/mach-u300/Kconfig"
 

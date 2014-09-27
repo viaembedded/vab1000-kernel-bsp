@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -12,15 +12,15 @@
  */
 
 /*
- * This simple implementation of a name-value store assumes a small number of values and fits
- * into a small finite buffer.
+ * This simple implementation of a name-value store assumes a small number of
+* values and fits into a small finite buffer.
  *
  * Each attribute is stored as a record:
  *  sizeof(int) bytes   record size.
  *  strnlen+1 bytes name null terminated.
  *  nbytes    value.
  *  ----------
- *  total size  stored in record size 
+ *  total size  stored in record size
  *
  * This code has not been tested with unicode yet.
  */
@@ -28,19 +28,20 @@
 #include "yaffs_nameval.h"
 
 #include "yportenv.h"
+#include "yaffs_trace.h"
 
-static int nval_find(const char *xb, int xb_size, const YCHAR * name,
+static int nval_find(const char *xb, int xb_size, const YCHAR *name,
 		     int *exist_size)
 {
 	int pos = 0;
 	int size;
-
+	ENTER() ;
 	memcpy(&size, xb, sizeof(int));
 	while (size > 0 && (size < xb_size) && (pos + size < xb_size)) {
-		if (strncmp
-		    ((YCHAR *) (xb + pos + sizeof(int)), name, size) == 0) {
+		if (!strncmp((YCHAR *) (xb + pos + sizeof(int)),name, size)) {
 			if (exist_size)
 				*exist_size = size;
+			LEAVE();
 			return pos;
 		}
 		pos += size;
@@ -51,14 +52,15 @@ static int nval_find(const char *xb, int xb_size, const YCHAR * name,
 	}
 	if (exist_size)
 		*exist_size = 0;
-	return -1;
+	LEAVE() ;
+	return -ENODATA;
 }
 
 static int nval_used(const char *xb, int xb_size)
 {
 	int pos = 0;
 	int size;
-
+	ENTER() ;
 	memcpy(&size, xb + pos, sizeof(int));
 	while (size > 0 && (size < xb_size) && (pos + size < xb_size)) {
 		pos += size;
@@ -67,27 +69,32 @@ static int nval_used(const char *xb, int xb_size)
 		else
 			size = 0;
 	}
+	LEAVE() ;
 	return pos;
 }
 
-int nval_del(char *xb, int xb_size, const YCHAR * name)
+int nval_del(char *xb, int xb_size, const YCHAR *name)
 {
 	int pos = nval_find(xb, xb_size, name, NULL);
 	int size;
+	ENTER() ;
 
-	if (pos >= 0 && pos < xb_size) {
-		/* Find size, shift rest over this record, then zero out the rest of buffer */
-		memcpy(&size, xb + pos, sizeof(int));
-		memcpy(xb + pos, xb + pos + size, xb_size - (pos + size));
-		memset(xb + (xb_size - size), 0, size);
-		return 0;
-	} else {
+	if (pos < 0 || pos >= xb_size)
+	{
+		LEAVE() ;
 		return -ENODATA;
-        }
+	}
+	/* Find size, shift rest over this record,
+	 * then zero out the rest of buffer */
+	memcpy(&size, xb + pos, sizeof(int));
+	memcpy(xb + pos, xb + pos + size, xb_size - (pos + size));
+	memset(xb + (xb_size - size), 0, size);
+	LEAVE() ;
+	return 0;
 }
 
-int nval_set(char *xb, int xb_size, const YCHAR * name, const char *buf,
-	     int bsize, int flags)
+int nval_set(char *xb, int xb_size, const YCHAR *name, const char *buf,
+		int bsize, int flags)
 {
 	int pos;
 	int namelen = strnlen(name, xb_size);
@@ -95,22 +102,29 @@ int nval_set(char *xb, int xb_size, const YCHAR * name, const char *buf,
 	int size_exist = 0;
 	int space;
 	int start;
-
+	ENTER() ;
 	pos = nval_find(xb, xb_size, name, &size_exist);
 
 	if (flags & XATTR_CREATE && pos >= 0)
+	{
+		LEAVE() ;
 		return -EEXIST;
+	}
 	if (flags & XATTR_REPLACE && pos < 0)
+	{
+		LEAVE() ;
 		return -ENODATA;
-
+	}
 	start = nval_used(xb, xb_size);
 	space = xb_size - start + size_exist;
 
 	reclen = (sizeof(int) + namelen + 1 + bsize);
 
 	if (reclen > space)
+	{
+		LEAVE() ;
 		return -ENOSPC;
-
+	}
 	if (pos >= 0) {
 		nval_del(xb, xb_size, name);
 		start = nval_used(xb, xb_size);
@@ -123,6 +137,7 @@ int nval_set(char *xb, int xb_size, const YCHAR * name, const char *buf,
 	strncpy((YCHAR *) (xb + pos), name, reclen);
 	pos += (namelen + 1);
 	memcpy(xb + pos, buf, bsize);
+	LEAVE() ;
 	return 0;
 }
 
@@ -131,7 +146,7 @@ int nval_get(const char *xb, int xb_size, const YCHAR * name, char *buf,
 {
 	int pos = nval_find(xb, xb_size, name, NULL);
 	int size;
-
+	ENTER() ;
 	if (pos >= 0 && pos < xb_size) {
 
 		memcpy(&size, xb + pos, sizeof(int));
@@ -147,16 +162,27 @@ int nval_get(const char *xb, int xb_size, const YCHAR * name, char *buf,
 		pos++;
 		size--;
 
-		if (size <= bsize) {
-			memcpy(buf, xb + pos, size);
+		/* If bsize is zero then this is a size query.
+		 * Return the size, but don't copy.
+		 */
+		if (!bsize)
+		{
+			LEAVE();
 			return size;
 		}
-
+		if (size <= bsize) {
+			memcpy(buf, xb + pos, size);
+			LEAVE();
+			return size;
+		}
 	}
 	if (pos >= 0)
+	{
+		LEAVE() ;
 		return -ERANGE;
-	else
-		return -ENODATA;
+	}
+	 LEAVE() ;
+	return -ENODATA;
 }
 
 int nval_list(const char *xb, int xb_size, char *buf, int bsize)
@@ -166,10 +192,12 @@ int nval_list(const char *xb, int xb_size, char *buf, int bsize)
 	int name_len;
 	int ncopied = 0;
 	int filled = 0;
-
+	ENTER() ;
 	memcpy(&size, xb + pos, sizeof(int));
-	while (size > sizeof(int) && size <= xb_size && (pos + size) < xb_size
-	       && !filled) {
+	while (size > sizeof(int) &&
+		size <= xb_size &&
+		(pos + size) < xb_size &&
+		!filled) {
 		pos += sizeof(int);
 		size -= sizeof(int);
 		name_len = strnlen((YCHAR *) (xb + pos), size);
@@ -185,13 +213,14 @@ int nval_list(const char *xb, int xb_size, char *buf, int bsize)
 			ncopied += (name_len + 1);
 		} else {
 			filled = 1;
-                }
+		}
 		pos += size;
 		if (pos < xb_size - sizeof(int))
 			memcpy(&size, xb + pos, sizeof(int));
 		else
 			size = 0;
 	}
+	LEAVE() ;
 	return ncopied;
 }
 

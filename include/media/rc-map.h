@@ -19,6 +19,7 @@
 #define RC_TYPE_SONY	(1  << 4)	/* Sony12/15/20 protocol */
 #define RC_TYPE_RC5_SZ	(1  << 5)	/* RC5 variant used by Streamzap */
 #define RC_TYPE_SANYO   (1  << 6)	/* Sanyo protocol */
+#define RC_TYPE_OCN     (1  << 7)       /* NGB OCN protocol */
 #define RC_TYPE_MCE_KBD	(1  << 29)	/* RC6-ish MCE keyboard/mouse */
 #define RC_TYPE_LIRC	(1  << 30)	/* Pass raw IR to lirc userspace */
 #define RC_TYPE_OTHER	(1u << 31)
@@ -26,7 +27,7 @@
 #define RC_TYPE_ALL (RC_TYPE_RC5    | RC_TYPE_NEC   | RC_TYPE_RC6     | \
 		     RC_TYPE_JVC    | RC_TYPE_SONY  | RC_TYPE_LIRC    | \
 		     RC_TYPE_RC5_SZ | RC_TYPE_SANYO | RC_TYPE_MCE_KBD | \
-		     RC_TYPE_OTHER)
+		     RC_TYPE_OTHER | RC_TYPE_OCN)
 
 struct rc_map_table {
 	u32	scancode;
@@ -155,6 +156,7 @@ void rc_map_init(void);
 #define RC_MAP_VIDEOMATE_TV_PVR          "rc-videomate-tv-pvr"
 #define RC_MAP_WINFAST                   "rc-winfast"
 #define RC_MAP_WINFAST_USBII_DELUXE      "rc-winfast-usbii-deluxe"
+#define RC_MAP_ELITE_TV                  "rc-elite-tv"
 
 /*
  * Please, do not just append newer Remote Controller names at the end.

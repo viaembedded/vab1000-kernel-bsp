@@ -1,0 +1,25 @@
+#
+# Input core configuration
+#
+menuconfig INPUT_RMTCTL
+	bool "Remote controllers" 
+	help
+	  Say Y here, and a list of supported remote control devices will 
+	  be displayed. This option doesn't affect the kernel.
+
+	  If unsure, say Y.
+
+if INPUT_RMTCTL
+
+config RMTCTL_ELITE
+	tristate "ELITE remote control support"
+	default y
+	depends on INPUT && INPUT_RMTCTL && ARCH_ELITE
+	help
+	  Say Y here if you want remote control support for S3.
+
+	  If unsure, say Y.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called atkbd.
+endif

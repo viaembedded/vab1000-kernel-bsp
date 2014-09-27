@@ -331,6 +331,23 @@ static int find_snd_minor(int type, struct snd_card *card, int dev)
 	return -1;
 }
 
+int snd_find_minor(int type, int cardnum, int dev)
+{
+    int minor;
+    struct snd_minor *mptr;
+
+    for(minor = 0; minor < ARRAY_SIZE(snd_minors); ++minor)
+    {
+        if((mptr = snd_minors[minor]) != NULL && mptr->type == type &&
+            mptr->card == cardnum && mptr->device == dev)
+        {
+            return minor;
+        }
+    }
+    return -1;
+}
+EXPORT_SYMBOL(snd_find_minor);
+
 /**
  * snd_unregister_device - unregister the device on the given card
  * @type: the device type, SNDRV_DEVICE_TYPE_XXX

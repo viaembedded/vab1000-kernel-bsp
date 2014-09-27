@@ -1,0 +1,6 @@
+config RTL8192CU_WNA3100M
+	tristate "Realtek 8192C USB WiFi for wna3100m offical version"
+	depends on USB
+	---help---
+	  Help message of RTL8192CU
+

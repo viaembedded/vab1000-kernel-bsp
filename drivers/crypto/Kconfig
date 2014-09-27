@@ -296,4 +296,15 @@ config CRYPTO_DEV_TEGRA_AES
 	  To compile this driver as a module, choose M here: the module
 	  will be called tegra-aes.
 
+config CRYPTO_DEV_ELITE_CRYPTO
+        tristate "Driver for ELITE security engine hw accelerator"
+        depends on ARCH_ELITE_1000
+        select CRYPTO_SHA1
+        select CRYPTO_AES
+        select CRYPTO_DES
+        select CRYPTO_ALGAPI
+        select CRYPTO_BLKCIPHER
+        help
+          ELITE SOC has a security engine to support cryptographic/hash hw accelerator.
+
 endif # CRYPTO_HW

@@ -1,6 +1,9 @@
 
 obj-$(CONFIG_ATA)		+= libata.o
 
+# For ELITE SOC SATA controller
+obj-$(CONFIG_ELITE_VIA)         += elite_via.o
+
 # non-SFF interface
 obj-$(CONFIG_SATA_AHCI)		+= ahci.o libahci.o
 obj-$(CONFIG_SATA_ACARD_AHCI)	+= acard-ahci.o libahci.o

@@ -56,11 +56,31 @@ static int wm831x_wdt_start(struct watchdog_device *wdt_dev)
 	struct wm831x_wdt_drvdata *driver_data = watchdog_get_drvdata(wdt_dev);
 	struct wm831x *wm831x = driver_data->wm831x;
 	int ret;
+	int reg;	//;elite1k-520016c-YSW-06
 
 	mutex_lock(&driver_data->lock);
 
 	ret = wm831x_reg_unlock(wm831x);
 	if (ret == 0) {
+
+//;elite1k-520016c-YSW-06 - start		
+
+		//Enable WDT_RESET system re-powered-up fail workaround
+//		printk("ysw_debug: WDT Set PMIC GPIO entered\n");
+		reg = wm831x_reg_read(wm831x, WM831X_GPIO7_CONTROL);
+		reg = reg & ~0x848F | 0x008A;
+		wm831x_reg_write(wm831x, WM831X_GPIO7_CONTROL, reg);
+
+		reg = wm831x_reg_read(wm831x, WM831X_GPIO_LEVEL);
+		reg = reg & ~0x0040 | 0x0040;
+		wm831x_reg_write(wm831x, WM831X_GPIO_LEVEL, reg);
+
+		reg = wm831x_reg_read(wm831x, 0x4089);
+		reg = reg & ~0xE000 | 0x6000;
+		wm831x_reg_write(wm831x, 0x4089, reg);
+
+//;elite1k-520016c-YSW-06 - end
+		
 		ret = wm831x_set_bits(wm831x, WM831X_WATCHDOG,
 				      WM831X_WDOG_ENA, WM831X_WDOG_ENA);
 		wm831x_reg_lock(wm831x);
@@ -168,6 +188,49 @@ static int wm831x_wdt_set_timeout(struct watchdog_device *wdt_dev,
 	return ret;
 }
 
+//;elite1k-520016c-YSW-06 - start
+static long wm831x_wdt_ioctl(struct watchdog_device *wdt_dev,
+				  unsigned int cmd, unsigned long arg)
+{
+	struct wm831x_wdt_drvdata *driver_data = watchdog_get_drvdata(wdt_dev);
+	struct wm831x *wm831x = driver_data->wm831x;
+	int ret, i, reg;
+
+	void __user *argp = (void __user *)arg;
+	int __user *p = argp;
+	unsigned int val;
+	int err;
+
+	switch (cmd) {
+
+		case WDIOC_WRITE_SCRATCH:
+			wm831x_reg_write(wm831x, 0x4009, 0x55AA);
+			return 0;
+
+		case WDIOC_WRITE_REG:	
+
+			if (get_user(val, p))
+				return -EFAULT;
+
+			ret = wm831x_reg_unlock(wm831x);
+
+			//Read PMIC Register
+			reg = wm831x_reg_read(wm831x, val);
+
+			wm831x_reg_lock(wm831x);
+
+			return put_user(reg, p);
+
+		default:
+			return -ENOIOCTLCMD;
+
+
+	}
+
+	return ret;
+}
+//;elite1k-520016c-YSW-06 - end
+
 static const struct watchdog_info wm831x_wdt_info = {
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.identity = "WM831x Watchdog",
@@ -179,6 +242,7 @@ static const struct watchdog_ops wm831x_wdt_ops = {
 	.stop = wm831x_wdt_stop,
 	.ping = wm831x_wdt_ping,
 	.set_timeout = wm831x_wdt_set_timeout,
+	.ioctl = wm831x_wdt_ioctl,					//;elite1k-520016c-YSW-06
 };
 
 static int __devinit wm831x_wdt_probe(struct platform_device *pdev)

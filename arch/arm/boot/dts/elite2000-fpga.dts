@@ -1,0 +1,34 @@
+/*
+ * Copyright (C) 2013 S3 Graphics - http://www.s3graphics.com/
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+/dts-v1/;
+
+/include/ "elite2000.dtsi"
+
+
+/ {
+	model = "S3GRAPHICS Elite2000 FPGA board";
+	compatible = "s3graphics,board-fpga", "s3graphics,elite2000";
+
+	chosen {
+		bootargs = "console=ttyS0,115200n8 root=/dev/mmcblk0p1 init=/init rootdelay=5";
+	};
+
+	memory {
+		reg = < 0x2000000 0x7F800000 >;
+	};
+
+	soc {
+		uart0: serial@d8200000 {
+			status = "ok";
+		};
+
+		uart1: serial@d82b0000 {
+			status = "disabled";
+		};
+	};
+};

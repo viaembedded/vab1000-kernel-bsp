@@ -1,0 +1,69 @@
+if ARCH_ELITE
+
+# comment "S3Graphics Elite options"
+
+menu "S3 Graphics Elite System-on-Chip"
+
+choice
+	prompt "S3 Graphics Elite Processor"
+
+config ARCH_ELITE_1000
+	bool "Support S3 Graphics Elite 1000"
+	select VFP
+	select NEON
+        select ARCH_HAS_CPUFREQ
+	select LOCAL_TIMERS if SMP
+	select USB_ARCH_HAS_EHCI if USB_SUPPORT
+	select ARM_ERRATA_754322
+	select ARM_ERRATA_764369
+	help
+	  Include support for the Elite 1000.
+
+# config ARCH_ELITE_1000
+
+endchoice
+
+config ARM_GLOBAL_TIMER
+	bool "Use ARM global timer"
+
+# ----------------------------------------------------------
+
+if ARCH_ELITE_1000
+
+comment "ELITE 1000 Board Type"
+
+config MACH_EMMC
+	bool "Board using eMMC chip as main storage device"
+	help
+	  Select this if you are using eMMC chip.
+
+#;ysw_debug - start
+config MACH_EMMC_DT
+	bool "Board using eMMC chip as main storage device with Device Tree support"
+	select USE_OF
+	select PROC_DEVICETREE
+	help
+	  Machine support for S3 Graphics elite1000 machine with device tree enabled.
+	  Select this if a fdt blob is available for the ELITE1000 SoC EMMC-based board.
+#;ysw_debug - end
+
+config MACH_NAND
+	bool "Board using NAND flash as main storage device"
+	help
+	  Select this if you are using NAND flash.
+
+config MACH_NAND_DT
+	bool "Board using device tree"
+	select USE_OF
+	select PROC_DEVICETREE
+	help
+	  Machine support for S3 Graphics elite1000 machine with device tree enabled.
+	  Select this if a fdt blob is available for the ELITE1000 SoC based board.
+
+endif
+# ----------------------------------------------------------
+
+endmenu
+
+endif
+

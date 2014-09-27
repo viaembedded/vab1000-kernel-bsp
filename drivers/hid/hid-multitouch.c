@@ -912,6 +912,11 @@ static const struct hid_device_id mt_devices[] = {
 	{  .driver_data = MT_CLS_DEFAULT,
 		HID_USB_DEVICE(USB_VENDOR_ID_ILITEK,
 			USB_DEVICE_ID_ILITEK_MULTITOUCH) },
+//;elite1k-520016c.d1-GLU-09 - Start
+        /* IPCT touch panel */
+       {.driver_data = MT_CLS_DEFAULT,
+           HID_USB_DEVICE(0x10c4,0x88cd)},
+//;elite1k-520016c.d1-GLU-09 - End
 
 	/* IRTOUCH panels */
 	{ .driver_data = MT_CLS_DUAL_INRANGE_CONTACTID,

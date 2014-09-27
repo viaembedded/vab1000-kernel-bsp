@@ -67,6 +67,13 @@ config SATA_PMP
 
 comment "Controllers with non-SFF native interface"
 
+# For ELITE SOC SATA controller
+config ELITE_VIA
+        tristate "ELITE_VIA support"
+        default m
+        help
+          low level driver for ELITE SOC SATA controller
+
 config SATA_AHCI
 	tristate "AHCI SATA support"
 	depends on PCI

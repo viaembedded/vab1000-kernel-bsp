@@ -14,6 +14,8 @@ source "drivers/pnp/Kconfig"
 
 source "drivers/block/Kconfig"
 
+source "drivers/crypto/Kconfig"
+
 # misc before ide - BLK_DEV_SGIIOC4 depends on SGI_IOC4
 
 source "drivers/misc/Kconfig"
@@ -49,6 +51,8 @@ source "drivers/char/Kconfig"
 source "drivers/i2c/Kconfig"
 
 source "drivers/spi/Kconfig"
+
+source "drivers/slimbus/Kconfig"
 
 source "drivers/hsi/Kconfig"
 

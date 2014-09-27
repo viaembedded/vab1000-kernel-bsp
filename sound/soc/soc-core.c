@@ -596,6 +596,12 @@ int snd_soc_suspend(struct device *dev)
 				 * means it's doing something,
 				 * otherwise fall through.
 				 */
+				//;elite1k-520016e1-Ned-04-start
+				codec->driver->suspend(codec);
+				codec->suspended = 1;
+				codec->cache_sync = 1;
+				break;
+				//;elite1k-520016e1-Ned-04-end
 				if (codec->dapm.idle_bias_off) {
 					dev_dbg(codec->dev,
 						"idle_bias_off CODEC on over suspend\n");
@@ -607,6 +613,11 @@ int snd_soc_suspend(struct device *dev)
 				codec->cache_sync = 1;
 				break;
 			default:
+				//;elite1k-520016e1-Ned-04-start
+				codec->driver->suspend(codec);
+				codec->suspended = 1;
+				codec->cache_sync = 1;
+				//;elite1k-520016e1-Ned-04-end
 				dev_dbg(codec->dev, "CODEC is on over suspend\n");
 				break;
 			}
@@ -671,11 +682,20 @@ static void soc_resume_deferred(struct work_struct *work)
 		if (codec->driver->resume && codec->suspended) {
 			switch (codec->dapm.bias_level) {
 			case SND_SOC_BIAS_STANDBY:
+				//;elite1k-520016e1-Ned-04-start
+				codec->driver->resume(codec);
+				codec->suspended = 0;
+				break;
+				//;elite1k-520016e1-Ned-04-end
 			case SND_SOC_BIAS_OFF:
 				codec->driver->resume(codec);
 				codec->suspended = 0;
 				break;
 			default:
+				//;elite1k-520016e1-Ned-04-start
+				codec->driver->resume(codec);
+				codec->suspended = 0;
+				//;elite1k-520016e1-Ned-04-end
 				dev_dbg(codec->dev, "CODEC was on over suspend\n");
 				break;
 			}

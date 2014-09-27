@@ -713,6 +713,16 @@ config I2C_XILINX
 	  This driver can also be built as a module.  If so, the module
 	  will be called xilinx_i2c.
 
+config I2C_ELITE
+        tristate "S3 Elite SoC I2C Controller"
+        depends on ARCH_ELITE
+        help
+          Say yes if you want to support the I2C serial bus on Elite SoC from
+          S3 Graphics Co.,Ltd.
+
+          This driver can also be built as a module.  If so, the module
+          will be called i2c-elite.
+
 config I2C_XLR
 	tristate "XLR I2C support"
 	depends on CPU_XLR

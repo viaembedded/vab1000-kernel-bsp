@@ -411,6 +411,15 @@ config KEYBOARD_OPENCORES
 	  To compile this driver as a module, choose M here; the
 	  module will be called opencores-kbd.
 
+config KEYBOARD_ELITE
+        tristate "ELITE kpad support"
+        depends on INPUT && ARCH_ELITE
+        help
+          Enable support for ELite kpad controller.
+
+          To compile this driver as a module, choose M here: the
+          module will be called elite_keypad.
+
 config KEYBOARD_PXA27x
 	tristate "PXA27x/PXA3xx keypad support"
 	depends on PXA27x || PXA3xx || ARCH_MMP
@@ -579,5 +588,16 @@ config KEYBOARD_W90P910
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called w90p910_keypad.
+
+config KEYBOARD_FRONTPAD
+	tristate "Elite Frontpad"
+	depends on I2C
+	help
+	  Say Y here to enable the frontpad on elite board
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called frontpad.  
 
 endif

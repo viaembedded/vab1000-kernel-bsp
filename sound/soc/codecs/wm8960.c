@@ -157,8 +157,16 @@ static const DECLARE_TLV_DB_SCALE(bypass_tlv, -2100, 300, 0);
 static const DECLARE_TLV_DB_SCALE(out_tlv, -12100, 100, 1);
 
 static const struct snd_kcontrol_new wm8960_snd_controls[] = {
+//;elite1k-520016e1-Ned-03-start
 SOC_DOUBLE_R_TLV("Capture Volume", WM8960_LINVOL, WM8960_RINVOL,
-		 0, 63, 0, adc_tlv),
+		 0, 35, 0, adc_tlv),
+//;elite1k-520016e1-Ned-03-end
+//;elite1k-520016c1-Ned-02-start
+/*
+SOC_DOUBLE_R_TLV("Capture Volume", WM8960_LINVOL, WM8960_RINVOL,
+		 0, 1, 0, adc_tlv),
+*/
+//;elite1k-520016c1-Ned-02-end
 SOC_DOUBLE_R("Capture Volume ZC Switch", WM8960_LINVOL, WM8960_RINVOL,
 	6, 1, 0),
 SOC_DOUBLE_R("Capture Switch", WM8960_LINVOL, WM8960_RINVOL,
@@ -203,9 +211,14 @@ SOC_SINGLE("ALC Attack", WM8960_ALC3, 0, 15, 0),
 
 SOC_SINGLE("Noise Gate Threshold", WM8960_NOISEG, 3, 31, 0),
 SOC_SINGLE("Noise Gate Switch", WM8960_NOISEG, 0, 1, 0),
-
+//;elite1k-520016e1-Ned-03-start
 SOC_DOUBLE_R("ADC PCM Capture Volume", WM8960_LINPATH, WM8960_RINPATH,
-	0, 127, 0),
+	0, 0, 0),
+//;elite1k-520016e1-Ned-03-end
+
+//;elite1k-520016e1-Ned-03 SOC_DOUBLE_R("ADC PCM Capture Volume", WM8960_LINPATH, WM8960_RINPATH,
+//;elite1k-520016e1-Ned-03	0, 127, 0),
+
 
 SOC_SINGLE_TLV("Left Output Mixer Boost Bypass Volume",
 	       WM8960_BYPASS1, 4, 7, 1, bypass_tlv),
@@ -239,13 +252,19 @@ SOC_DAPM_SINGLE("Boost Switch", WM8960_RINPATH, 3, 1, 0),
 
 static const struct snd_kcontrol_new wm8960_loutput_mixer[] = {
 SOC_DAPM_SINGLE("PCM Playback Switch", WM8960_LOUTMIX, 8, 1, 0),
-SOC_DAPM_SINGLE("LINPUT3 Switch", WM8960_LOUTMIX, 7, 1, 0),
+//;elite1k-520016c1-Ned-01 SOC_DAPM_SINGLE("LINPUT3 Switch", WM8960_LOUTMIX, 7, 1, 0),
+//;elite1k-520016c1-Ned-01-start
+SOC_DAPM_SINGLE("LINPUT3 Switch", WM8960_LOUTMIX, 7, 0, 1),
+//;elite1k-520016c1-Ned-01-end
 SOC_DAPM_SINGLE("Boost Bypass Switch", WM8960_BYPASS1, 7, 1, 0),
 };
 
 static const struct snd_kcontrol_new wm8960_routput_mixer[] = {
 SOC_DAPM_SINGLE("PCM Playback Switch", WM8960_ROUTMIX, 8, 1, 0),
-SOC_DAPM_SINGLE("RINPUT3 Switch", WM8960_ROUTMIX, 7, 1, 0),
+//;elite1k-520016c1-Ned-01 SOC_DAPM_SINGLE("RINPUT3 Switch", WM8960_ROUTMIX, 7, 1, 0),
+//;elite1k-520016c1-Ned-01-start
+  SOC_DAPM_SINGLE("RINPUT3 Switch", WM8960_ROUTMIX, 7, 0, 1),
+//;elite1k-520016c1-Ned-01-end
 SOC_DAPM_SINGLE("Boost Bypass Switch", WM8960_BYPASS2, 7, 1, 0),
 };
 
@@ -274,8 +293,8 @@ SND_SOC_DAPM_MIXER("Left Input Mixer", WM8960_POWER3, 5, 0,
 SND_SOC_DAPM_MIXER("Right Input Mixer", WM8960_POWER3, 4, 0,
 		   wm8960_rin, ARRAY_SIZE(wm8960_rin)),
 
-SND_SOC_DAPM_ADC("Left ADC", "Capture", WM8960_POWER2, 3, 0),
-SND_SOC_DAPM_ADC("Right ADC", "Capture", WM8960_POWER2, 2, 0),
+SND_SOC_DAPM_ADC("Left ADC", "Capture", WM8960_POWER1, 3, 0),
+SND_SOC_DAPM_ADC("Right ADC", "Capture", WM8960_POWER1, 2, 0),
 
 SND_SOC_DAPM_DAC("Left DAC", "Playback", WM8960_POWER2, 8, 0),
 SND_SOC_DAPM_DAC("Right DAC", "Playback", WM8960_POWER2, 7, 0),
@@ -888,6 +907,9 @@ static int wm8960_suspend(struct snd_soc_codec *codec)
 
 static int wm8960_resume(struct snd_soc_codec *codec)
 {
+        //;elite1k-520016c1-Ned-01-start
+	wm8960_add_widgets(codec);
+	//;elite1k-520016c1-Ned-01-end
 	struct wm8960_priv *wm8960 = snd_soc_codec_get_drvdata(codec);
 
 	wm8960->set_bias_level(codec, SND_SOC_BIAS_STANDBY);
@@ -944,6 +966,68 @@ static int wm8960_probe(struct snd_soc_codec *codec)
 				     ARRAY_SIZE(wm8960_snd_controls));
 	wm8960_add_widgets(codec);
 
+//;elite1k-520016c1-Ned-01-start
+	u16 reg;
+
+//;elite1k-520016e1-Ned-03	reg = snd_soc_read(codec,0x22);
+//;elite1k-520016e1-Ned-03	printk("========= reg 22h value : %02x\n",reg);
+	snd_soc_write(codec,0x22,0x80);
+//;elite1k-520016e1-Ned-03	reg = snd_soc_read(codec,0x22);
+//;elite1k-520016e1-Ned-03	printk("============== after modify Reg 0x22 value : %02x\n",reg);
+
+//;elite1k-520016e1-Ned-03	reg = snd_soc_read(codec,0x25);
+//;elite1k-520016e1-Ned-03	printk("========= reg 25h value : %02x\n",reg);
+	snd_soc_write(codec,0x25,0x80);
+//;elite1k-520016e1-Ned-03	reg = snd_soc_read(codec,0x25);
+//;elite1k-520016e1-Ned-03	printk("============== after modify Reg 0x25 value : %02x\n",reg);
+
+//;elite1k-520016e1-Ned-03	reg = snd_soc_read(codec,0x26);
+//;elite1k-520016e1-Ned-03        printk("========= reg 26h value : %02x\n",reg);
+        snd_soc_write(codec,0x26,0x80);
+//;elite1k-520016e1-Ned-03        reg = snd_soc_read(codec,0x26);
+//;elite1k-520016e1-Ned-03        printk("============== after modify Reg 0x26 value : %02x\n",reg);	
+
+
+//;elite1k-520016e1-Ned-03	reg = snd_soc_read(codec,0x27);
+//;elite1k-520016e1-Ned-03        printk("========= reg 27h value : %02x\n",reg);
+        snd_soc_write(codec,0x27,0x80);
+//;elite1k-520016e1-Ned-03        reg = snd_soc_read(codec,0x27);
+//;elite1k-520016e1-Ned-03        printk("============== after modify Reg 0x27 value : %02x\n",reg);
+
+
+	//output mixer LOMIX ROMIX enable
+//;elite1k-520016e1-Ned-03	reg = snd_soc_read(codec,0x2f);
+//;elite1k-520016e1-Ned-03        printk("========= reg 2fh value : %02x\n",reg);
+        snd_soc_write(codec,0x2f,0x3c);
+//;elite1k-520016e1-Ned-03        reg = snd_soc_read(codec,0x2f);
+//;elite1k-520016e1-Ned-03        printk("============== after modify Reg 0x2f value : %02x\n",reg);
+
+//;elite1k-520016e1-Ned-03	reg = snd_soc_read(codec,0x20);
+//;elite1k-520016e1-Ned-03        printk("========= reg 20h value : %02x\n",reg);
+        snd_soc_write(codec,0x20,0x1f8);
+//;elite1k-520016e1-Ned-03        reg = snd_soc_read(codec,0x20);
+//;elite1k-520016e1-Ned-03        printk("============== after modify Reg 0x20 value : %02x\n",reg);	
+
+//;elite1k-520016e1-Ned-03	reg = snd_soc_read(codec,0x21);
+//;elite1k-520016e1-Ned-03        printk("========= reg 21h value : %02x\n",reg);
+        snd_soc_write(codec,0x21,0x1f8);
+//;elite1k-520016e1-Ned-03        reg = snd_soc_read(codec,0x21);
+//;elite1k-520016e1-Ned-03        printk("============== after modify Reg 0x21 value : %02x\n",reg);
+//;elite1k-520016c1-Ned-01-end
+
+
+//;elite1k-520016c1-Ned-02-start
+//;elite1k-520016e1-Ned-03	snd_soc_write(codec,WM8960_LINVOL,0x140);
+//;elite1k-520016e1-Ned-03	snd_soc_write(codec,WM8960_RINVOL,0x140);
+//;elite1k-520016c1-Ned-02-end
+
+//;elite1k-520016e1-Ned-03-start
+	snd_soc_write(codec,WM8960_LINPATH,0x1c8);
+	snd_soc_write(codec,WM8960_RINPATH,0x1c8);
+	snd_soc_write(codec,WM8960_LADC,0x1c3);
+	snd_soc_write(codec,WM8960_RADC,0x1c3);
+//;elite1k-520016e1-Ned-03-end
+
 	return 0;
 }
 
@@ -993,6 +1077,14 @@ static __devexit int wm8960_i2c_remove(struct i2c_client *client)
 	return 0;
 }
 
+#ifdef CONFIG_OF
+static const struct of_device_id wm8960_of_match[] = {
+	{ .compatible = "wlf,wm8960", },
+	{},
+};
+MODULE_DEVICE_TABLE(of, wm8960_of_match);
+#endif
+
 static const struct i2c_device_id wm8960_i2c_id[] = {
 	{ "wm8960", 0 },
 	{ }
@@ -1003,6 +1095,7 @@ static struct i2c_driver wm8960_i2c_driver = {
 	.driver = {
 		.name = "wm8960",
 		.owner = THIS_MODULE,
+        .of_match_table = of_match_ptr(wm8960_of_match), 
 	},
 	.probe =    wm8960_i2c_probe,
 	.remove =   __devexit_p(wm8960_i2c_remove),

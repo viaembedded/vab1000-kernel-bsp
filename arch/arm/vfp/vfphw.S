@@ -58,7 +58,7 @@
 #endif
 	.endm
 
-
+#define NEON_MASK  0xE0000000
 @ VFP hardware support entry point.
 @
 @  r0  = instruction opcode (32-bit ARM or two 16-bit Thumb)
@@ -197,6 +197,18 @@ look_for_VFP_exceptions:
 	sub	r11, r4, #1		@ decrement it
 	str	r11, [r10, #TI_PREEMPT]
 #endif
+@----------------Turn On Neon -------------------
+    ands    r4, r0,#NEON_MASK
+    ldr     r5, =0xE0000000
+    cmp     r4, r5
+    bne      not_neon
+    sub	    r2, r2, #4
+    str	    r2, [sp, #S_PC]		@ retry the instruction
+    mov     r0, r11
+    bl      turn_on_neon
+    mov     pc,r9
+not_neon:        
+@------------------------------------------------
 	mov	pc, lr
 
 process_exception:

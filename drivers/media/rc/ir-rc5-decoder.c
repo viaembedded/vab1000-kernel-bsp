@@ -61,13 +61,14 @@ static int ir_rc5_decode(struct rc_dev *dev, struct ir_raw_event ev)
 		return 0;
 	}
 
-	if (!geq_margin(ev.duration, RC5_UNIT, RC5_UNIT / 2))
+/*	if (!geq_margin(ev.duration, RC5_UNIT, RC5_UNIT / 2))
+		goto out;   */
+    	if (!geq_margin(ev.duration, RC5_UNIT, 150000))   /*Fix OCN and RC5 conflict */
 		goto out;
 
 again:
 	IR_dprintk(2, "RC5(x) decode started at state %i (%uus %s)\n",
 		   data->state, TO_US(ev.duration), TO_STR(ev.pulse));
-
 	if (!geq_margin(ev.duration, RC5_UNIT, RC5_UNIT / 2))
 		return 0;
 
@@ -87,7 +88,6 @@ again:
 	case STATE_BIT_START:
 		if (!eq_margin(ev.duration, RC5_BIT_START, RC5_UNIT / 2))
 			break;
-
 		data->bits <<= 1;
 		if (!ev.pulse)
 			data->bits |= 1;
@@ -146,11 +146,11 @@ again:
 			toggle   = (data->bits & 0x00800) ? 1 : 0;
 			command += (data->bits & 0x01000) ? 0 : 0x40;
 			scancode = system << 8 | command;
-
 			IR_dprintk(1, "RC5 scancode 0x%04x (toggle: %u)\n",
 				   scancode, toggle);
+        
 		}
-
+               scancode = scancode | 0x20000; //Add to map RC_MAP_ELITE_TV
 		rc_keydown(dev, scancode, toggle);
 		data->state = STATE_INACTIVE;
 		return 0;

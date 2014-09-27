@@ -4,6 +4,7 @@ obj-y += keymaps/
 
 obj-$(CONFIG_RC_CORE) += rc-core.o
 obj-$(CONFIG_LIRC) += lirc_dev.o
+obj-$(CONFIG_IR_OCN_DECODER) += ir-ocn-decoder.o
 obj-$(CONFIG_IR_NEC_DECODER) += ir-nec-decoder.o
 obj-$(CONFIG_IR_RC5_DECODER) += ir-rc5-decoder.o
 obj-$(CONFIG_IR_RC6_DECODER) += ir-rc6-decoder.o
@@ -27,3 +28,4 @@ obj-$(CONFIG_IR_STREAMZAP) += streamzap.o
 obj-$(CONFIG_IR_WINBOND_CIR) += winbond-cir.o
 obj-$(CONFIG_RC_LOOPBACK) += rc-loopback.o
 obj-$(CONFIG_IR_GPIO_CIR) += gpio-ir-recv.o
+obj-$(CONFIG_IR_ELITE_GPIO_CIR) += elite-gpio-ir-recv.o

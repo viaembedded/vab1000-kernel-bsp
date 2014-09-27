@@ -571,4 +571,41 @@ config MTD_NAND_FSMC
 	  Enables support for NAND Flash chips on the ST Microelectronics
 	  Flexible Static Memory Controller (FSMC)
 
+config MTD_NAND_ELITE
+        tristate "NAND Flash support for elite SoC"
+        depends on ARCH_ELITE_1000
+        help
+          This enables the NAND flash controller on the ELITE
+          SoCs
+
+          No board specific support is done by this driver, each board
+          must advertise a platform_device for the driver to attach.
+
+config MTD_NAND_CHIP_NUM
+        int "NAND Flash numbers select verbosity (1 = CE0, 2 = CE0,CE1)"
+        depends on MTD_NAND_ELITE
+        default "1"
+        help
+          Determines the verbosity numbers of nand chip supported by ELITE.
+
+config MTD_NAND_ELITE_HWECC
+        bool "ELITE NAND Hardware ECC"
+        depends on MTD_NAND_ELITE
+        help
+          Enable the use of the ELITE internal ECC generator when
+          using NAND.
+
+config MTD_NAND_PAGE_SIZE
+        int "NAND Flash Page Size select verbosity (512, 2048, 4096)"
+        depends on MTD_NAND_ELITE
+        default "2048"
+        help
+          Determines the verbosity pagesize of nand chip supported by ELITE.
+
+config MTD_NAND_HM_ECC
+        int "ELITE NAND Hardware ECC Algorithm select verbosity(Harming ECC: =1, BCH ECC: =2)"
+        depends on MTD_NAND_ELITE
+        default "2"
+        help
+          Enable the use of the ELITE internal ECC generator when using NAND.
 endif # MTD_NAND

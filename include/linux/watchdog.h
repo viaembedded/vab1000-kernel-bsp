@@ -32,6 +32,11 @@ struct watchdog_info {
 #define	WDIOC_GETPRETIMEOUT	_IOR(WATCHDOG_IOCTL_BASE, 9, int)
 #define	WDIOC_GETTIMELEFT	_IOR(WATCHDOG_IOCTL_BASE, 10, int)
 
+//;elite1k-520016c-YSW-06 - start
+#define	WDIOC_WRITE_REG		_IOR(WATCHDOG_IOCTL_BASE, 11, int)
+#define	WDIOC_WRITE_SCRATCH	_IOR(WATCHDOG_IOCTL_BASE, 12, int)
+//;elite1k-520016c-YSW-06 - end
+
 #define	WDIOF_UNKNOWN		-1	/* Unknown flag error */
 #define	WDIOS_UNKNOWN		-1	/* Unknown status error */
 

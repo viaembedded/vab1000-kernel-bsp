@@ -1,0 +1,59 @@
+if ARCH_ELITE2000
+
+# comment "S3Graphics Elite options"
+
+menu "S3 Graphics Elite2K System-on-Chip"
+
+choice
+	prompt "S3 Graphics Elite Processor"
+
+config ARCH_ELITE_2000
+	bool "Support S3 Graphics Elite 2000"
+	select VFP
+	select NEON
+        select ARCH_HAS_CPUFREQ
+	select LOCAL_TIMERS if SMP
+	select USB_ARCH_HAS_EHCI if USB_SUPPORT
+	select ARM_ERRATA_754322
+	select ARM_ERRATA_764369
+	help
+	  Include support for the Elite 2000.
+
+# config ARCH_ELITE_2000
+
+endchoice
+
+config ARM_GLOBAL_TIMER
+	bool "Use ARM global timer"
+
+# ----------------------------------------------------------
+
+if ARCH_ELITE_2000
+
+comment "ELITE 2000 Board Type"
+
+#config MACH_EMMC
+#	bool "Board using eMMC chip as main storage device"
+#	help
+#	  Select this if you are using eMMC chip.
+
+#config MACH_NAND
+#	bool "Board using NAND flash as main storage device"
+#	help
+#	  Select this if you are using NAND flash.
+
+config MACH_NAND_DT
+	bool "Board using device tree"
+	select USE_OF
+	select PROC_DEVICETREE
+	help
+	  Machine support for S3 Graphics elite2000 machine with device tree enabled.
+	  Select this if a fdt blob is available for the ELITE 2000 SoC based board.
+
+endif
+# ----------------------------------------------------------
+
+endmenu
+
+endif
+

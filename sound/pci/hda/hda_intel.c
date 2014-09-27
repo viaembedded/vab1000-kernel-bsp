@@ -46,6 +46,8 @@
 #include <linux/mutex.h>
 #include <linux/reboot.h>
 #include <linux/io.h>
+#include <linux/freezer.h>
+#include <linux/kthread.h>
 #ifdef CONFIG_X86
 /* for snoop control */
 #include <asm/pgtable.h>
@@ -54,7 +56,10 @@
 #include <sound/core.h>
 #include <sound/initval.h>
 #include "hda_codec.h"
+#include <linux/vmalloc.h>
 
+/* elite HD audio bug. need fix !! */
+#define START_STREAM_PATCH_PATH
 
 static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
 static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
@@ -481,6 +486,15 @@ struct azx {
 
 	/* reboot notifier (for mysterious hangup problem at power-down) */
 	struct notifier_block reboot_notifier;
+
+        /* elite1000 patch, diu_remap_addr use to enable/clear interrupt */
+        void __iomem *diu_remap_addr;
+        
+        /* elite1000 patch, this kernel thread use to monitor interrupt of hda */
+        struct task_struct *monitor_thread;
+        wait_queue_head_t monitor_queue;
+        int irq_happened;
+        int stream_running;
 };
 
 /* driver types */
@@ -497,6 +511,7 @@ enum {
 	AZX_DRIVER_NVIDIA,
 	AZX_DRIVER_TERA,
 	AZX_DRIVER_CTX,
+	AZX_DRIVER_S3HDMI,
 	AZX_DRIVER_GENERIC,
 	AZX_NUM_DRIVERS, /* keep this as last entry */
 };
@@ -545,9 +560,137 @@ static char *driver_short_names[] __devinitdata = {
 	[AZX_DRIVER_ULI] = "HDA ULI M5461",
 	[AZX_DRIVER_NVIDIA] = "HDA NVidia",
 	[AZX_DRIVER_TERA] = "HDA Teradici", 
-	[AZX_DRIVER_CTX] = "HDA Creative", 
+	[AZX_DRIVER_CTX] = "HDA Creative",
+	[AZX_DRIVER_S3HDMI] = "HDA S3 HDMI",
 	[AZX_DRIVER_GENERIC] = "HD-Audio Generic",
 };
+
+#ifdef __BIG_ENDIAN__
+void writel_s3(int value, char* addr, int offset)
+{
+
+    *((volatile int*)addr + offset/4) = value;
+}
+
+int readl_s3(char* addr, int offset)
+{
+    int value;
+
+    value = *((volatile int*)addr + offset/4);
+
+    return value;
+}
+
+void writew_s3(short value, char* addr, int offset)
+{
+     int real_offset = (2 - (offset%4) + (offset/4)*4)/2;
+
+     *((volatile short*)addr + real_offset) = value;
+}
+
+short readw_s3(char* addr, int offset)
+{
+     short value;
+
+     int real_offset = (2 - (offset%4) + (offset/4)*4)/2;
+
+     value = *((volatile short*)addr + real_offset);
+
+     return value;
+
+}
+
+void writeb_s3(char value, char* addr, int offset)
+{
+     int real_offset = 3 - (offset%4) + (offset/4)*4;
+
+     *((volatile char*)addr + real_offset) = value;
+}
+
+char readb_s3(char* addr, int offset)
+{
+    int real_offset = 3 - (offset%4) + (offset/4)*4;
+
+    return *((volatile char*)addr + real_offset);
+}
+/*
+ * macros for easy use
+ */
+#define azx_writel(chip,reg,value) \
+	writel_s3(value, (chip)->remap_addr,  ICH6_REG_##reg)
+#define azx_readl(chip,reg) \
+	readl_s3((chip)->remap_addr, ICH6_REG_##reg)
+#define azx_writew(chip,reg,value) \
+	writew_s3(value, (chip)->remap_addr, ICH6_REG_##reg)
+#define azx_readw(chip,reg) \
+	readw_s3((chip)->remap_addr, ICH6_REG_##reg)
+#define azx_writeb(chip,reg,value) \
+	writeb_s3(value, (chip)->remap_addr, ICH6_REG_##reg)
+#define azx_readb(chip,reg) \
+	readb_s3((chip)->remap_addr, ICH6_REG_##reg)
+
+#define azx_sd_writel(dev,reg,value) \
+	writel_s3(value, (dev)->sd_addr, ICH6_REG_##reg)
+#define azx_sd_readl(dev,reg) \
+	readl_s3((dev)->sd_addr, ICH6_REG_##reg)
+#define azx_sd_writew(dev,reg,value) \
+	writew_s3(value, (dev)->sd_addr, ICH6_REG_##reg)
+#define azx_sd_readw(dev,reg) \
+	readw_s3((dev)->sd_addr, ICH6_REG_##reg)
+#define azx_sd_writeb(dev,reg,value) \
+	writeb_s3(value, (dev)->sd_addr, ICH6_REG_##reg)
+#define azx_sd_readb(dev,reg) \
+	readb_s3((dev)->sd_addr, ICH6_REG_##reg)
+
+
+
+static void* s3_tmp_buf = 0;
+static void azx_s3_bytes_copy(char* dst, char* src, int len)
+{
+    int i;
+    int left;
+
+    for(i = 0; i < len/4; i++)
+    {
+        *(dst)   = *(src+3);
+        *(dst+1) = *(src+2);
+        *(dst+2) = *(src+1);
+        *(dst+3) = *(src);
+        dst += 4;
+        src += 4;
+    }
+
+    left = len & 3;
+
+    for(i = 0; i < left; i++)
+    {
+        *(dst+3-i) = *(src+i);
+    }
+
+}
+int azx_s3_pcm_copy(struct snd_pcm_substream* substream, int channel, unsigned long pos, void __user* buf, unsigned long count)
+{
+    struct snd_pcm_runtime* runtime = substream->runtime;
+    char* hwbuf = runtime->dma_area + frames_to_bytes(runtime, pos);
+
+    if(s3_tmp_buf == 0)
+    {
+        s3_tmp_buf = vmalloc(0x100000);
+    }
+
+    if(copy_from_user(s3_tmp_buf, buf, frames_to_bytes(runtime, count)))
+    {
+        return -1;
+    }
+
+    azx_s3_bytes_copy(hwbuf, s3_tmp_buf, frames_to_bytes(runtime, count));
+
+    return 0;
+}
+
+#define s3g_cpu_to_le32(val) val
+#define s3g_le32_to_cpu(val) val
+#else //__BIG_ENDIAN__
 
 /*
  * macros for easy use
@@ -569,6 +712,12 @@ static char *driver_short_names[] __devinitdata = {
 	writel(value, (dev)->sd_addr + ICH6_REG_##reg)
 #define azx_sd_readl(dev,reg) \
 	readl((dev)->sd_addr + ICH6_REG_##reg)
+
+#define s3g_cpu_to_le32(val) cpu_to_le32(val)
+#define s3g_le32_to_cpu(val) le32_to_cpu(val)
+
+#endif //__BIG_ENDIAN__
+
 #define azx_sd_writew(dev,reg,value) \
 	writew(value, (dev)->sd_addr + ICH6_REG_##reg)
 #define azx_sd_readw(dev,reg) \
@@ -733,7 +882,7 @@ static int azx_corb_send_cmd(struct hda_bus *bus, u32 val)
 	wp %= ICH6_MAX_CORB_ENTRIES;
 
 	chip->rirb.cmds[addr]++;
-	chip->corb.buf[wp] = cpu_to_le32(val);
+	chip->corb.buf[wp] = s3g_cpu_to_le32(val);
 	azx_writel(chip, CORBWP, wp);
 
 	spin_unlock_irq(&chip->reg_lock);
@@ -760,8 +909,8 @@ static void azx_update_rirb(struct azx *chip)
 		chip->rirb.rp %= ICH6_MAX_RIRB_ENTRIES;
 
 		rp = chip->rirb.rp << 1; /* an RIRB entry is 8-bytes */
-		res_ex = le32_to_cpu(chip->rirb.buf[rp + 1]);
-		res = le32_to_cpu(chip->rirb.buf[rp]);
+		res_ex = s3g_le32_to_cpu(chip->rirb.buf[rp + 1]);
+		res = s3g_le32_to_cpu(chip->rirb.buf[rp]);
 		addr = azx_response_addr(res_ex);
 		if (res_ex & ICH6_RIRB_EX_UNSOL_EV)
 			snd_hda_queue_unsol_event(chip->bus, res, res_ex);
@@ -1083,6 +1232,7 @@ static void azx_int_clear(struct azx *chip)
 	azx_writel(chip, INTSTS, ICH6_INT_CTRL_EN | ICH6_INT_ALL_STREAM);
 }
 
+#ifndef START_STREAM_PATCH_PATH
 /* start a stream */
 static void azx_stream_start(struct azx *chip, struct azx_dev *azx_dev)
 {
@@ -1098,6 +1248,7 @@ static void azx_stream_start(struct azx *chip, struct azx_dev *azx_dev)
 	azx_sd_writeb(azx_dev, SD_CTL, azx_sd_readb(azx_dev, SD_CTL) |
 		      SD_CTL_DMA_START | SD_INT_MASK);
 }
+#endif
 
 /* stop DMA */
 static void azx_stream_clear(struct azx *chip, struct azx_dev *azx_dev)
@@ -1228,7 +1379,12 @@ static irqreturn_t azx_interrupt(int irq, void *dev_id)
 	u8 sd_status;
 	int i, ok;
 
-	spin_lock(&chip->reg_lock);
+	//  s3 HD Audio patch start
+	//  the biu interrupt status must be cleared here
+	writel(0x1002, (char *)chip->diu_remap_addr + 0x8504);
+
+
+        spin_lock(&chip->reg_lock);
 
 	status = azx_readl(chip, INTSTS);
 	if (status == 0) {
@@ -1236,7 +1392,11 @@ static irqreturn_t azx_interrupt(int irq, void *dev_id)
 		return IRQ_NONE;
 	}
 	
-	for (i = 0; i < chip->num_streams; i++) {
+        /* inform monitor thread that irq happened */
+        chip->irq_happened = 1;
+        wake_up_interruptible(&chip->monitor_queue);
+	
+        for (i = 0; i < chip->num_streams; i++) {
 		azx_dev = &chip->azx_dev[i];
 		if (status & azx_dev->sd_int_sta_mask) {
 			sd_status = azx_sd_readb(azx_dev, SD_STS);
@@ -1300,16 +1460,16 @@ static int setup_bdle(struct snd_pcm_substream *substream,
 
 		addr = snd_pcm_sgbuf_get_addr(substream, ofs);
 		/* program the address field of the BDL entry */
-		bdl[0] = cpu_to_le32((u32)addr);
-		bdl[1] = cpu_to_le32(upper_32_bits(addr));
+		bdl[0] = s3g_cpu_to_le32((u32)addr);
+		bdl[1] = s3g_cpu_to_le32(upper_32_bits(addr));
 		/* program the size field of the BDL entry */
 		chunk = snd_pcm_sgbuf_get_chunk_size(substream, ofs, size);
-		bdl[2] = cpu_to_le32(chunk);
+		bdl[2] = s3g_cpu_to_le32(chunk);
 		/* program the IOC to enable interrupt
 		 * only when the whole fragment is processed
 		 */
 		size -= chunk;
-		bdl[3] = (size || !with_ioc) ? 0 : cpu_to_le32(0x01);
+		bdl[3] = (size || !with_ioc) ? 0 : s3g_cpu_to_le32(0x01);
 		bdl += 4;
 		azx_dev->frags++;
 		ofs += chunk;
@@ -1438,7 +1598,7 @@ static int azx_setup_controller(struct azx *chip, struct azx_dev *azx_dev)
 	/* program the stream LVI (last valid index) of the BDL */
 	azx_sd_writew(azx_dev, SD_LVI, azx_dev->frags - 1);
 
-	/* program the BDL address */
+        /* program the BDL address */
 	/* lower BDL address */
 	azx_sd_writel(azx_dev, SD_BDLPL, (u32)azx_dev->bdl.addr);
 	/* upper BDL address */
@@ -1459,6 +1619,47 @@ static int azx_setup_controller(struct azx *chip, struct azx_dev *azx_dev)
 	return 0;
 }
 
+#ifdef START_STREAM_PATCH_PATH
+/* start a stream */
+static void azx_stream_start(struct azx *chip, struct azx_dev *azx_dev)
+{
+	int LPIB;
+	int try = 5;
+        /*
+         * Before stream start, initialize parameter
+         */
+        azx_dev->insufficient = 1;
+        
+        chip->stream_running = 1;
+        wake_up_interruptible(&chip->monitor_queue);
+        do
+        {
+                /* enable SIE */
+                azx_writel(chip, INTCTL,
+                   	azx_readl(chip, INTCTL) | (1 << azx_dev->index));
+
+                /* set DMA start and interrupt mask */
+                azx_sd_writeb(azx_dev, SD_CTL, azx_sd_readb(azx_dev, SD_CTL) |
+                      SD_CTL_DMA_START | SD_INT_MASK);
+
+                mdelay(6);
+                LPIB = azx_sd_readl(azx_dev, SD_LPIB);
+                if(LPIB < 0x100)
+                {
+        		printk("azx_stream_start fail.(LPIB=0x%x)  try again\n", LPIB);
+               		azx_stream_stop(chip, azx_dev);
+               		azx_stream_reset(chip, azx_dev);
+               		azx_setup_controller(chip, azx_dev);
+                }
+                else
+                {
+                	break;
+                }
+        }
+        while(--try > 0);
+}
+#endif
+
 /*
  * Probe the given codec address
  */
@@ -1466,8 +1667,8 @@ static int probe_codec(struct azx *chip, int addr)
 {
 	unsigned int cmd = (addr << 28) | (AC_NODE_ROOT << 20) |
 		(AC_VERB_PARAMETERS << 8) | AC_PAR_VENDOR_ID;
-	unsigned int res;
 
+        unsigned int res;
 	mutex_lock(&chip->bus->cmd_mutex);
 	chip->probing = 1;
 	azx_send_cmd(chip->bus, cmd);
@@ -1630,12 +1831,13 @@ azx_assign_device(struct azx *chip, struct snd_pcm_substream *substream)
 		dev = chip->capture_index_offset;
 		nums = chip->capture_streams;
 	}
-	for (i = 0; i < nums; i++, dev++)
+	for (i = 0; i < nums; i++, dev++) 
 		if (!chip->azx_dev[dev].opened) {
 			res = &chip->azx_dev[dev];
 			if (res->assigned_key == key)
 				break;
 		}
+
 	if (res) {
 		res->opened = 1;
 		res->assigned_key = key;
@@ -1996,7 +2198,7 @@ static unsigned int azx_via_get_position(struct azx *chip,
 	/* For new chipset,
 	 * use mod to get the DMA position just like old chipset
 	 */
-	mod_dma_pos = le32_to_cpu(*azx_dev->posbuf);
+	mod_dma_pos = s3g_le32_to_cpu(*azx_dev->posbuf);
 	mod_dma_pos %= azx_dev->period_bytes;
 
 	/* azx_dev->fifo_size can't get FIFO size of in stream.
@@ -2045,13 +2247,18 @@ static unsigned int azx_get_position(struct azx *chip,
 	case POS_FIX_LPIB:
 		/* read LPIB */
 		pos = azx_sd_readl(azx_dev, SD_LPIB);
+        //s3 HD Audio patch start
+        /*fix elite1000's link_position error. Will be fixed in elite2000*/
+        pos = 2 * pos;
+        //s3 HD Audio patch end
+
 		break;
 	case POS_FIX_VIACOMBO:
 		pos = azx_via_get_position(chip, azx_dev);
 		break;
 	default:
 		/* use the position buffer */
-		pos = le32_to_cpu(*azx_dev->posbuf);
+		pos = s3g_le32_to_cpu(*azx_dev->posbuf);
 		if (with_check && chip->position_fix[stream] == POS_FIX_AUTO) {
 			if (!pos || pos == (u32)-1) {
 				printk(KERN_WARNING
@@ -2191,6 +2398,9 @@ static struct snd_pcm_ops azx_pcm_ops = {
 	.pointer = azx_pcm_pointer,
 	.mmap = azx_pcm_mmap,
 	.page = snd_pcm_sgbuf_ops_page,
+#ifdef __BIG_ENDIAN__
+        .copy = azx_s3_pcm_copy,
+#endif
 };
 
 static void azx_pcm_free(struct snd_pcm *pcm)
@@ -2292,6 +2502,12 @@ static int __devinit azx_init_stream(struct azx *chip)
 
 static int azx_acquire_irq(struct azx *chip, int do_disconnect)
 {
+        /* hard code to 37
+         * fix me !
+         */
+	chip->irq = 37;
+	chip->pci->irq = 37;
+
 	if (request_irq(chip->pci->irq, azx_interrupt,
 			chip->msi ? 0 : IRQF_SHARED,
 			KBUILD_MODNAME, chip)) {
@@ -2394,6 +2610,10 @@ static int azx_resume(struct pci_dev *pci)
 	struct snd_card *card = pci_get_drvdata(pci);
 	struct azx *chip = card->private_data;
 
+	/* must enable interrupt when HDAudio controller initialize */
+	writel(0x400f002, (char *)chip->diu_remap_addr + 0x8508);
+	// s3 HD Audio patch over
+
 	pci_set_power_state(pci, PCI_D0);
 	pci_restore_state(pci);
 	if (pci_enable_device(pci) < 0) {
@@ -2481,6 +2701,15 @@ static int azx_free(struct azx *chip)
 		mark_pages_wc(chip, &chip->posbuf, false);
 		snd_dma_free_pages(&chip->posbuf);
 	}
+
+	if (chip->diu_remap_addr) {
+		iounmap(chip->diu_remap_addr);
+	}
+
+        if (chip->monitor_thread) {
+                kthread_stop(chip->monitor_thread);
+        }
+
 	pci_release_regions(chip->pci);
 	pci_disable_device(chip->pci);
 	kfree(chip->azx_dev);
@@ -2662,6 +2891,55 @@ static void __devinit azx_check_snoop_available(struct azx *chip)
 	}
 }
 
+int thread_func(void *arg)
+{
+    struct azx *chip = (struct azx*)arg;
+    int result = 0;
+    static int count = 0;
+
+    set_freezable();
+
+    while(!kthread_should_stop()) {
+        try_to_freeze();
+
+        if(chip->stream_running) {
+            result = wait_event_interruptible_timeout(
+                 chip->monitor_queue,
+                 (chip->irq_happened == 1) || freezing(current) || kthread_should_stop(),
+                 msecs_to_jiffies(50));
+            count = count + 1;
+            //if(count % 50 == 0) printk("monitor thread receive irq");
+            chip->irq_happened = 0;
+            
+            /* check timeout */
+            if(result == 0) {
+                /* if stream is running, bug occurs */
+                if(readl((char *)chip->remap_addr + 0x80) & SD_CTL_DMA_START) {
+                    if(readb((char *)chip->remap_addr + 0x24) & 0x1) {
+                        printk("manually clear interrupt\n");
+                        writeb(0x4, (char *)chip->remap_addr + 0x83);
+                    }
+                }
+
+                /* close stream may lead to the timeout, then sleep this thread util stream is running again */
+                else {
+                    chip->stream_running = 0;
+                }
+            }
+            continue;
+        }
+        else {
+            /* stream is not running */
+            printk("HDA interrupt Monitor --> [sleep]\n");
+            wait_event_interruptible(chip->monitor_queue,
+                  (chip->stream_running == 1) || freezing(current) || kthread_should_stop());
+            printk("HDA interrupt Monitor --> [active]\n");
+        }
+
+    }
+    return 0;
+}
+
 /*
  * constructor
  */
@@ -2676,6 +2954,9 @@ static int __devinit azx_create(struct snd_card *card, struct pci_dev *pci,
 		.dev_free = azx_dev_free,
 	};
 
+	void __iomem *remap_addr;
+	unsigned int chip_version = 0;
+	
 	*rchip = NULL;
 
 	err = pci_enable_device(pci);
@@ -2688,6 +2969,21 @@ static int __devinit azx_create(struct snd_card *card, struct pci_dev *pci,
 		pci_disable_device(pci);
 		return -ENOMEM;
 	}
+
+	//s3 HD Audio patch start
+	chip->diu_remap_addr = ioremap_nocache(0xd80a0000, 0x10000);
+
+	/* must enable interrupt when HDAudio controller initialize */
+	writel(0x400f002, (char *)chip->diu_remap_addr + 0x8508);
+
+	chip_version = readl((char *)chip->diu_remap_addr + 0x8500);
+
+	if((chip_version & 0xF) < 0x2) {
+		//HDMI is not available on A0 or A1 chip
+		printk(KERN_ERR "this chip is not support HDMI.\n");
+		return -EINVAL;
+	}
+	// s3 HD Audio patch over
 
 	spin_lock_init(&chip->reg_lock);
 	mutex_init(&chip->open_mutex);
@@ -2721,6 +3017,9 @@ static int __devinit azx_create(struct snd_card *card, struct pci_dev *pci,
 		case AZX_DRIVER_PCH:
 			bdl_pos_adj[dev] = 1;
 			break;
+		case AZX_DRIVER_S3HDMI:
+			bdl_pos_adj[dev] = 128;
+			break;
 		default:
 			bdl_pos_adj[dev] = 32;
 			break;
@@ -2744,13 +3043,29 @@ static int __devinit azx_create(struct snd_card *card, struct pci_dev *pci,
 		return err;
 	}
 
-	chip->addr = pci_resource_start(pci, 0);
-	chip->remap_addr = pci_ioremap_bar(pci, 0);
-	if (chip->remap_addr == NULL) {
+        /* hard code to 0xd8090000
+         * fix me !
+         */
+	chip->addr = 0xd8090000;//pci_resource_start(pci, 0);
+	//chip->remap_addr = pci_ioremap_bar(pci, 0); 
+	chip->remap_addr = ioremap_nocache(chip->addr,0x400);//pci_ioremap_bar(pci, 0);
+        
+        chip->irq_happened = 0;
+        chip->stream_running = 0;
+        init_waitqueue_head(&chip->monitor_queue);
+
+
+        if (chip->remap_addr == NULL) {
 		snd_printk(KERN_ERR SFX "ioremap error\n");
 		err = -ENXIO;
 		goto errout;
 	}
+
+        chip->monitor_thread = kthread_run(thread_func, chip, "hda_interrupt_monitor");
+        if (IS_ERR(chip->monitor_thread)) {
+                err = PTR_ERR(chip->monitor_thread);
+                goto errout;
+        }
 
 	if (chip->msi)
 		if (pci_enable_msi(pci) < 0)
@@ -2811,6 +3126,11 @@ static int __devinit azx_create(struct snd_card *card, struct pci_dev *pci,
 	 */
 	chip->capture_streams = (gcap >> 8) & 0x0f;
 	chip->playback_streams = (gcap >> 12) & 0x0f;
+
+        /* elite1000 hdaudio patch , have only one output stream here
+         */
+        chip->playback_streams = 1;
+
 	if (!chip->playback_streams && !chip->capture_streams) {
 		/* gcap didn't give any info, switching to old method */
 
@@ -2937,7 +3257,11 @@ static int __devinit azx_probe(struct pci_dev *pci,
 
 	/* set this here since it's referred in snd_hda_load_patch() */
 	snd_card_set_dev(card, &pci->dev);
-
+     
+	//s3 HD Audio patch start
+    //device_disable_async_suspend(&pci->dev);
+	//s3 HD Audio patch end
+    
 	err = azx_create(card, pci, dev, pci_id->driver_data, &chip);
 	if (err < 0)
 		goto out_free;
@@ -3113,6 +3437,11 @@ static DEFINE_PCI_DEVICE_TABLE(azx_ids) = {
 	/* Teradici */
 	{ PCI_DEVICE(0x6549, 0x1200),
 	  .driver_data = AZX_DRIVER_TERA | AZX_DCAPS_NO_64BIT },
+	/* S3 */
+	{ PCI_DEVICE(0x5333, 0x903f), .driver_data = AZX_DRIVER_S3HDMI },
+	{ PCI_DEVICE(0x5333, 0x904f), .driver_data = AZX_DRIVER_S3HDMI },
+	/*419*/
+        { PCI_DEVICE(0x1106, 0x9140), .driver_data = AZX_DRIVER_S3HDMI },
 	/* Creative X-Fi (CA0110-IBG) */
 #if !defined(CONFIG_SND_CTXFI) && !defined(CONFIG_SND_CTXFI_MODULE)
 	/* the following entry conflicts with snd-ctxfi driver,
@@ -3167,6 +3496,15 @@ static int __init alsa_card_azx_init(void)
 static void __exit alsa_card_azx_exit(void)
 {
 	pci_unregister_driver(&driver);
+
+#ifdef __BIG_ENDIAN__
+       if(s3_tmp_buf)
+       {
+           vfree(s3_tmp_buf);
+           s3_tmp_buf = 0;
+       }
+#endif
+
 }
 
 module_init(alsa_card_azx_init)

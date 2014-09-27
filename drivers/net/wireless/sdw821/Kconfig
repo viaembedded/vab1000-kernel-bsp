@@ -1,0 +1,22 @@
+#
+# SDW821 Wireless LAN device configuration
+#
+
+config SDW821
+      tristate "SPECTEC sdw-821 chipset  802.11b/g support"
+      depends on MMC_ELITE
+      select WIRELESS_EXT
+      select WEXT_PRIV
+      select WEXT_SPY
+      select FW_LOADER
+       ---help---
+        A driver 802.11b/g wireless cards based on the SPECTEC
+        chips. This driver supports standard Linux wireless extensions.
+
+        Many  cards based on this chipset do not have flash memory
+        and need their firmware loaded at start-up. If yours is
+        one of these, you will need to provide a firmware image
+        to be loaded into the card by the driver. The SPECTEC
+        firmware package can be found in drivers/net/wireless/sdw821
+        directory, named ks7010sd.rom. Configuable file ks79xx.cfg also
+        locate in the same directory.

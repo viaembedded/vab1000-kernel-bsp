@@ -44,6 +44,11 @@ struct ir_raw_event_ctrl {
 	/* raw decoder state follows */
 	struct ir_raw_event prev_ev;
 	struct ir_raw_event this_ev;
+	struct ocn_dec {
+		int state;
+		unsigned count;
+		u64 bits;
+	} ocn;
 	struct nec_dec {
 		int state;
 		unsigned count;

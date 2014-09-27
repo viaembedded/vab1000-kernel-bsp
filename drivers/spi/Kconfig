@@ -403,6 +403,11 @@ config SPI_NUC900
 	help
 	  SPI driver for Nuvoton NUC900 series ARM SoCs
 
+config SPI_ELITE
+        tristate "Elite spi controller"
+        depends on ARCH_ELITE_1000
+        help
+          SPI driver for Elite spi controllers.
 #
 # Add new SPI master controllers in alphabetical order above this line
 #
